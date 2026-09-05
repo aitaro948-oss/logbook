@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="筋トレ記録">
+<meta name="theme-color" content="#EDEEE9">
+<title>筋トレ記録</title>
+<style>
+:root{
+  --chalk:#EDEEE9; --paper:#FBFBF8; --line:#D3D6CC; --ink:#22292E; --ink2:#5F6870; --ink3:#9AA3A9;
+  --plate-blue:#2456A4; --plate-blue-dk:#1B438A; --plate-red:#B8343A; --plate-green:#2E7D4F; --plate-yellow:#E0B429;
+  --radius:14px; --tap:52px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--chalk);color:var(--ink);
+  font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%;}
+body{padding:env(safe-area-inset-top) 0 calc(72px + env(safe-area-inset-bottom));}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.screen{display:none;padding:12px 16px 24px;max-width:560px;margin:0 auto}
+.screen.active{display:block}
+h1{font-size:22px;font-weight:700;margin:8px 0 14px;letter-spacing:.01em}
+h2{font-size:14px;font-weight:600;color:var(--ink2);margin:20px 0 8px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 12px}
+.back{display:inline-flex;align-items:center;gap:4px;color:var(--plate-blue);font-weight:600;min-height:44px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.card+.card{margin-top:10px}
+.btn{display:flex;align-items:center;justify-content:center;min-height:var(--tap);border-radius:var(--radius);
+  font-weight:700;font-size:17px;padding:0 18px;width:100%}
+.btn.primary{background:var(--plate-blue);color:#fff}
+.btn.primary:active{background:var(--plate-blue-dk)}
+.btn.ghost{background:var(--paper);border:1.5px solid var(--line);color:var(--ink)}
+.btn.danger{background:var(--paper);border:1.5px solid var(--plate-red);color:var(--plate-red)}
+.btn[disabled]{opacity:.45}
+.row{display:flex;align-items:center;gap:10px}
+.grow{flex:1;min-width:0}
+.muted{color:var(--ink2)}
+.small{font-size:13px}
+.faint{color:var(--ink3)}
+/* 今日 */
+.datebar{display:flex;align-items:baseline;gap:10px}
+.datebar input{border:0;background:transparent;font-size:22px;font-weight:700;padding:0;color:var(--ink);width:auto}
+.today-group{padding:12px 0;border-top:1px solid var(--line)}
+.today-group:first-child{border-top:0}
+.today-group .name{font-weight:700;font-size:17px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{background:var(--chalk);border-radius:8px;padding:3px 9px;font-size:14px}
+.chip.today{background:#E3EAF6;color:var(--plate-blue-dk);font-weight:600}
+.empty{text-align:center;color:var(--ink2);padding:36px 12px}
+.empty b{display:block;color:var(--ink);font-size:18px;margin-bottom:6px}
+/* 種目選択 */
+.search{width:100%;min-height:48px;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;background:var(--paper);font-size:17px;-webkit-appearance:none}
+.parts{display:flex;gap:6px;overflow-x:auto;padding:10px 0 4px;scrollbar-width:none}
+.parts::-webkit-scrollbar{display:none}
+.part{flex:none;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--paper);font-weight:600;font-size:15px;min-height:40px}
+.part.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.list{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:13px 16px;min-height:56px;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .nm{font-weight:600;font-size:17px}
+.item .sub{font-size:12px;color:var(--ink3)}
+.item .last{font-size:14px;color:var(--ink2);text-align:right;flex:none}
+/* セット入力 */
+.prev{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.prev .lbl{font-size:13px;color:var(--ink2)}
+.prev .sets{font-size:19px;font-weight:600;margin-top:2px;letter-spacing:.01em}
+.prev .best{font-size:13px;color:var(--ink2);text-align:right}
+.prev .best b{display:block;font-size:17px;color:var(--ink)}
+.stepper{margin-top:10px}
+.stepper .lbl{font-size:13px;color:var(--ink2);display:flex;justify-content:space-between;align-items:center}
+.stepper .ctrl{display:flex;align-items:center;gap:6px;margin-top:6px}
+.stepper .val{flex:1;text-align:center;font-size:44px;font-weight:800;border:0;background:transparent;width:100%;min-width:0;padding:0;line-height:1.1}
+.stepper .val::-webkit-inner-spin-button{display:none}
+.stepper .unit{font-size:16px;color:var(--ink2);font-weight:600;margin-left:-4px}
+.sbtn{flex:none;width:56px;height:56px;border-radius:12px;background:var(--chalk);border:1.5px solid var(--line);font-size:18px;font-weight:700}
+.sbtn:active{background:#DFE2D9}
+.sbtn.big{background:#E3EAF6;border-color:#C6D3EA;color:var(--plate-blue-dk)}
+.toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink2);min-height:32px}
+.toggle input{width:18px;height:18px}
+.memo{width:100%;min-height:44px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;background:var(--paper);font-size:15px;margin-top:10px;-webkit-appearance:none}
+.setlist{margin-top:10px}
+.setrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.setrow:first-child{border-top:0}
+.setrow .n{width:34px;color:var(--ink3);font-size:13px}
+.setrow .v{flex:1;font-weight:600;font-size:17px}
+.setrow .m{color:var(--ink2);font-size:13px}
+.del{width:40px;height:40px;border-radius:10px;color:var(--plate-red);font-size:20px;flex:none}
+/* 書き出し */
+.count{font-size:40px;font-weight:800;line-height:1.1}
+.count small{font-size:15px;font-weight:600;color:var(--ink2);margin-left:4px}
+.steps{counter-reset:s;margin:0;padding:0;list-style:none}
+.steps li{position:relative;padding:8px 0 8px 32px;border-top:1px solid var(--line)}
+.steps li:first-child{border-top:0}
+.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:9px;width:22px;height:22px;border-radius:50%;background:var(--chalk);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.steps .btn{margin-top:8px;min-height:44px;font-size:15px}
+.hidden{display:none!important}
+textarea.raw{width:100%;height:120px;border:1.5px solid var(--line);border-radius:10px;padding:8px;font-size:12px;font-family:ui-monospace,Menlo,monospace;background:var(--paper)}
+/* 設定 */
+.field{margin-top:10px}
+.field label{display:block;font-size:13px;color:var(--ink2);margin-bottom:4px}
+.field input,.field select{width:100%;min-height:46px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;background:var(--paper);-webkit-appearance:none}
+.mrow{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line)}
+.mrow:first-child{border-top:0}
+.mrow .nm{flex:1;font-weight:600}
+.mrow .pt{font-size:13px;color:var(--ink2);width:40px}
+/* ナビ */
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);
+  display:flex;padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:10}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--ink3);min-height:48px;font-weight:600}
+nav button.on{color:var(--plate-blue)}
+nav svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.badge{position:absolute;margin-left:28px;margin-top:-2px;background:var(--plate-red);color:#fff;font-size:10px;border-radius:999px;padding:0 5px;min-width:16px;text-align:center}
+/* トースト */
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);
+  background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-weight:600;opacity:0;transition:opacity .15s,transform .15s;pointer-events:none;z-index:20;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+:focus-visible{outline:2px solid var(--plate-blue);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<!-- 今日 -->
+<section class="screen active" id="s-home">
+  <div class="top">
+    <div class="datebar"><input type="date" id="date"></div>
+    <div class="small muted num" id="home-stat"></div>
+  </div>
+  <div id="home-list"></div>
+  <div style="margin-top:14px"><button class="btn primary" onclick="openPicker()">種目を選ぶ</button></div>
+</section>
+
+<!-- 種目選択 -->
+<section class="screen" id="s-pick">
+  <div class="top"><button class="back" onclick="go('home')">‹ 今日</button><span class="small muted" id="pick-date"></span></div>
+  <input class="search" id="q" type="search" placeholder="種目名で検索" autocomplete="off" oninput="renderPicker()">
+  <div class="parts" id="parts"></div>
+  <div id="pick-list"></div>
+</section>
+
+<!-- セット入力 -->
+<section class="screen" id="s-entry">
+  <div class="top"><button class="back" onclick="go('home')">‹ 今日</button><span class="small muted" id="entry-part"></span></div>
+  <h1 id="entry-name"></h1>
+  <div class="card">
+    <div class="prev">
+      <div class="grow"><div class="lbl" id="prev-lbl">前回</div><div class="sets num" id="prev-sets"></div></div>
+      <div class="best"><span>自己ベスト</span><b class="num" id="prev-best"></b></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <div class="stepper">
+      <div class="lbl"><span>重量</span><label class="toggle"><input type="checkbox" id="bw" onchange="toggleBW()">自重</label></div>
+      <div class="ctrl" id="wctrl">
+        <button class="sbtn big" onclick="stepW(-2.5)">−2.5</button><button class="sbtn" onclick="stepW(-0.5)">−0.5</button>
+        <input class="val num" id="w" type="number" inputmode="decimal" step="0.5" min="0" placeholder="0"><span class="unit">kg</span>
+        <button class="sbtn" onclick="stepW(0.5)">+0.5</button><button class="sbtn big" onclick="stepW(2.5)">+2.5</button>
+      </div>
+    </div>
+    <div class="stepper">
+      <div class="lbl"><span>回数</span></div>
+      <div class="ctrl">
+        <button class="sbtn big" onclick="stepR(-1)">−1</button>
+        <input class="val num" id="r" type="number" inputmode="numeric" step="1" min="0" placeholder="0"><span class="unit">回</span>
+        <button class="sbtn big" onclick="stepR(1)">+1</button>
+      </div>
+    </div>
+    <input class="memo" id="memo" type="text" placeholder="メモ（任意）" autocomplete="off">
+    <div style="margin-top:12px"><button class="btn primary" id="add" onclick="addSet()">セットを追加</button></div>
+  </div>
+  <h2>今日のセット</h2>
+  <div class="card setlist" id="today-sets"></div>
+</section>
+
+<!-- 書き出し -->
+<section class="screen" id="s-export">
+  <h1>Excelへ書き出し</h1>
+  <div class="card">
+    <div class="count num"><span id="ex-count">0</span><small>セット 未貼り付け</small></div>
+    <div class="small muted" id="ex-range"></div>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <ol class="steps">
+      <li>PCで筋トレ記録.xlsxの01_入力フォームを開き、最終行の次の空行を確認する
+      </li>
+      <li>日付・部位・種目名をコピーして、その空行の<b>A列</b>に「値のみ貼り付け」
+        <button class="btn ghost" onclick="copyBlock('abc')">A〜C列用をコピー</button></li>
+      <li>重量・回数・メモをコピーして、同じ行の<b>E列</b>に「値のみ貼り付け」
+        <button class="btn ghost" onclick="copyBlock('efg')">E〜G列用をコピー</button></li>
+      <li>貼り付けが終わったらここを押す。次回はその後の記録だけが対象になる
+        <button class="btn primary" id="mark" onclick="markExported()">貼り付け済みにする</button></li>
+    </ol>
+    <textarea class="raw hidden" id="raw" readonly></textarea>
+  </div>
+  <h2>バックアップ</h2>
+  <div class="card">
+    <p class="small muted" style="margin:0 0 8px">記録はこのiPhoneの中だけに保存されます。Excelへの貼り付けを済ませていれば、Excel側が正本です。念のため月1回は保存しておくと安心です。</p>
+    <button class="btn ghost" onclick="downloadJSON()">全データを保存（JSON）</button>
+    <div style="height:8px"></div>
+    <button class="btn ghost" onclick="document.getElementById('file').click()">保存したデータを読み込む</button>
+    <input type="file" id="file" accept=".json,application/json" class="hidden" onchange="restoreJSON(this)">
+    <div style="height:8px"></div>
+    <button class="btn ghost" onclick="shareCSV()">全記録をCSVで共有</button>
+  </div>
+</section>
+
+<!-- 設定 -->
+<section class="screen" id="s-settings">
+  <h1>種目マスター</h1>
+  <p class="small muted" style="margin:0 0 10px">ここで追加した種目は、Excelの02_種目マスターにも同じ名前で追加してください（集計に必要）。</p>
+  <div class="card">
+    <div class="field"><label>種目名</label><input id="m-name" type="text" placeholder="例：チェストプレス" autocomplete="off"></div>
+    <div class="row">
+      <div class="field grow"><label>部位</label><select id="m-part"></select></div>
+      <div class="field grow"><label>重量の入れ方</label><select id="m-unit"><option>総重量</option><option>片手重量</option><option>自重</option><option>補助あり</option><option>その他</option></select></div>
+    </div>
+    <div style="margin-top:12px"><button class="btn primary" onclick="addMaster()">種目を追加</button></div>
+  </div>
+  <div class="card" style="margin-top:10px" id="m-list"></div>
+  <h2>データ</h2>
+  <div class="card">
+    <div class="small muted num" id="stat"></div>
+    <div style="height:8px"></div>
+    <button class="btn danger" onclick="resetAll()">すべての記録を消去</button>
+  </div>
+</section>
+
+<nav>
+  <button id="n-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"/></svg>今日</button>
+  <button id="n-export" onclick="go('export')"><span class="badge hidden" id="nbadge"></span><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M4 20h16"/></svg>書き出し</button>
+  <button id="n-settings" onclick="go('settings')"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>種目</button>
+</nav>
+<div id="toast"></div>
+
+<script>
+const SEED = {"master":[{"name":"スクワット","part":"脚","gear":"フリーウェイト","unit":"総重量"},{"name":"スミスマシンスクワット","part":"脚","gear":"スミスマシン","unit":"総重量"},{"name":"スプリットスクワット","part":"脚","gear":"ダンベル","unit":"片手重量"},{"name":"ブルガリアンスクワット","part":"脚","gear":"ダンベル","unit":"片手重量"},{"name":"ステーショナリーランジ","part":"脚","gear":"ダンベル","unit":"片手重量"},{"name":"レッグプレス","part":"脚","gear":"マシン","unit":"総重量"},{"name":"デッドリフト","part":"背中","gear":"フリーウェイト","unit":"総重量"},{"name":"ラットプルダウン","part":"背中","gear":"マシン","unit":"総重量"},{"name":"Vバーロウ","part":"背中","gear":"ケーブル","unit":"総重量"},{"name":"ワンハンドロウ","part":"背中","gear":"ダンベル","unit":"片手重量"},{"name":"ベントロー","part":"背中","gear":"フリーウェイト","unit":"総重量"},{"name":"チンニング","part":"背中","gear":"自重","unit":"自重"},{"name":"ベンチプレス","part":"胸","gear":"フリーウェイト","unit":"総重量"},{"name":"スミスマシンベンチプレス","part":"胸","gear":"スミスマシン","unit":"総重量"},{"name":"インクラインベンチプレス","part":"胸","gear":"フリーウェイト","unit":"総重量"},{"name":"ダンベルプレス","part":"胸","gear":"ダンベル","unit":"片手重量"},{"name":"インクラインダンベルフライ","part":"胸","gear":"ダンベル","unit":"片手重量"},{"name":"プッシュアップ","part":"胸","gear":"自重","unit":"自重"},{"name":"サイドレイズ","part":"肩","gear":"ダンベル","unit":"片手重量"},{"name":"リアレイズ","part":"肩","gear":"ダンベル","unit":"片手重量"},{"name":"ショルダープレス","part":"肩","gear":"ダンベル","unit":"片手重量"},{"name":"オーバーヘッドプレス","part":"肩","gear":"フリーウェイト","unit":"総重量"},{"name":"スカルクラッシャー","part":"腕","gear":"フリーウェイト","unit":"総重量"},{"name":"EZスカルクラッシャー","part":"腕","gear":"フリーウェイト","unit":"総重量"},{"name":"プレスダウン","part":"腕","gear":"ケーブル","unit":"総重量"},{"name":"EZバーカール","part":"腕","gear":"フリーウェイト","unit":"総重量"},{"name":"ケーブルカール","part":"腕","gear":"ケーブル","unit":"総重量"},{"name":"ハンマーカール","part":"腕","gear":"ダンベル","unit":"片手重量"},{"name":"インクラインカール","part":"腕","gear":"ダンベル","unit":"片手重量"},{"name":"アームカール","part":"腕","gear":"ダンベル","unit":"片手重量"},{"name":"サイドステップM","part":"その他","gear":"マシン","unit":"総重量"},{"name":"レッグエクステンション","part":"脚","gear":"マシン","unit":"総重量"},{"name":"インナーサイ","part":"脚","gear":"マシン","unit":"総重量"},{"name":"アウターサイ","part":"脚","gear":"マシン","unit":"総重量"},{"name":"バタフライマシン","part":"胸","gear":"マシン","unit":"総重量"}],"records":[{"date":"2026-01-10","name":"サイドステップM","weight":null,"reps":10,"memo":"","exported":true},{"date":"2026-01-10","name":"スクワット","weight":5,"reps":15,"memo":"元表記:sqw","exported":true},{"date":"2026-01-10","name":"スカルクラッシャー","weight":10,"reps":10,"memo":"","exported":true},{"date":"2026-01-10","name":"インクラインダンベルフライ","weight":6.5,"reps":10,"memo":"","exported":true},{"date":"2026-01-24","name":"ブルガリアンスクワット","weight":null,"reps":1,"memo":"自重（回数1は元記録のまま・要確認）","exported":true},{"date":"2026-01-24","name":"ブルガリアンスクワット","weight":null,"reps":1,"memo":"自重（回数1は元記録のまま・要確認）","exported":true},{"date":"2026-01-24","name":"スミスマシンベンチプレス","weight":25,"reps":10,"memo":"","exported":true},{"date":"2026-01-24","name":"スミスマシンベンチプレス","weight":25,"reps":10,"memo":"","exported":true},{"date":"2026-01-24","name":"EZバーカール","weight":10,"reps":15,"memo":"","exported":true},{"date":"2026-01-24","name":"EZバーカール","weight":10,"reps":15,"memo":"","exported":true},{"date":"2026-01-31","name":"デッドリフト","weight":16,"reps":10,"memo":"","exported":true},{"date":"2026-01-31","name":"デッドリフト","weight":16,"reps":10,"memo":"","exported":true},{"date":"2026-01-31","name":"デッドリフト","weight":16,"reps":8,"memo":"","exported":true},{"date":"2026-01-31","name":"ベンチプレス","weight":30,"reps":10,"memo":"元表記:Y BP","exported":true},{"date":"2026-01-31","name":"ベンチプレス","weight":30,"reps":10,"memo":"","exported":true},{"date":"2026-01-31","name":"ベンチプレス","weight":35,"reps":7,"memo":"","exported":true},{"date":"2026-01-31","name":"ラットプルダウン","weight":40,"reps":12,"memo":"","exported":true},{"date":"2026-01-31","name":"ラットプルダウン","weight":40,"reps":12,"memo":"","exported":true},{"date":"2026-01-31","name":"ラットプルダウン","weight":40,"reps":12,"memo":"","exported":true},{"date":"2026-01-31","name":"スプリットスクワット","weight":8,"reps":15,"memo":"","exported":true},{"date":"2026-01-31","name":"スプリットスクワット","weight":8,"reps":20,"memo":"","exported":true},{"date":"2026-02-06","name":"スミスマシンスクワット","weight":40,"reps":8,"memo":"元表記:SQW","exported":true},{"date":"2026-02-06","name":"スミスマシンスクワット","weight":40,"reps":10,"memo":"","exported":true},{"date":"2026-02-06","name":"スミスマシンスクワット","weight":45,"reps":10,"memo":"","exported":true},{"date":"2026-02-06","name":"Vバーロウ","weight":60,"reps":15,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-02-06","name":"Vバーロウ","weight":60,"reps":15,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-02-06","name":"Vバーロウ","weight":70,"reps":13,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-02-06","name":"プレスダウン","weight":30,"reps":12,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-02-06","name":"プレスダウン","weight":30,"reps":12,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-02-06","name":"ケーブルカール","weight":30,"reps":10,"memo":"元表記:ケーブル／P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-02-06","name":"ケーブルカール","weight":30,"reps":10,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-02-14","name":"ブルガリアンスクワット","weight":8,"reps":15,"memo":"","exported":true},{"date":"2026-02-14","name":"ブルガリアンスクワット","weight":10,"reps":10,"memo":"","exported":true},{"date":"2026-02-14","name":"レッグプレス","weight":32,"reps":10,"memo":"","exported":true},{"date":"2026-02-14","name":"レッグプレス","weight":32,"reps":10,"memo":"","exported":true},{"date":"2026-02-14","name":"レッグプレス","weight":32,"reps":12,"memo":"","exported":true},{"date":"2026-02-14","name":"インクラインベンチプレス","weight":25,"reps":10,"memo":"スミスマシン","exported":true},{"date":"2026-02-14","name":"インクラインベンチプレス","weight":25,"reps":10,"memo":"スミスマシン","exported":true},{"date":"2026-02-14","name":"インクラインベンチプレス","weight":25,"reps":10,"memo":"スミスマシン","exported":true},{"date":"2026-02-14","name":"サイドレイズ","weight":3.5,"reps":20,"memo":"","exported":true},{"date":"2026-02-14","name":"サイドレイズ","weight":3.5,"reps":20,"memo":"","exported":true},{"date":"2026-02-22","name":"ステーショナリーランジ","weight":13.5,"reps":15,"memo":"","exported":true},{"date":"2026-02-22","name":"ステーショナリーランジ","weight":16,"reps":12,"memo":"","exported":true},{"date":"2026-02-22","name":"プッシュアップ","weight":null,"reps":10,"memo":"元記録の数値を回数と解釈","exported":true},{"date":"2026-02-22","name":"プッシュアップ","weight":null,"reps":10,"memo":"","exported":true},{"date":"2026-02-22","name":"プッシュアップ","weight":null,"reps":15,"memo":"","exported":true},{"date":"2026-02-22","name":"チンニング","weight":null,"reps":10,"memo":"トレーナー補助あり／元記録の数値を回数と解釈","exported":true},{"date":"2026-02-22","name":"チンニング","weight":null,"reps":10,"memo":"トレーナー補助あり","exported":true},{"date":"2026-02-22","name":"チンニング","weight":null,"reps":10,"memo":"トレーナー補助あり","exported":true},{"date":"2026-02-22","name":"EZスカルクラッシャー","weight":10,"reps":15,"memo":"","exported":true},{"date":"2026-02-22","name":"EZスカルクラッシャー","weight":10,"reps":15,"memo":"","exported":true},{"date":"2026-02-22","name":"EZスカルクラッシャー","weight":10,"reps":15,"memo":"","exported":true},{"date":"2026-02-28","name":"スミスマシンスクワット","weight":50,"reps":10,"memo":"元表記:SQW","exported":true},{"date":"2026-02-28","name":"スミスマシンスクワット","weight":60,"reps":10,"memo":"","exported":true},{"date":"2026-02-28","name":"ワンハンドロウ","weight":10,"reps":15,"memo":"","exported":true},{"date":"2026-02-28","name":"ワンハンドロウ","weight":10,"reps":15,"memo":"","exported":true},{"date":"2026-02-28","name":"オーバーヘッドプレス","weight":13.5,"reps":8,"memo":"","exported":true},{"date":"2026-02-28","name":"オーバーヘッドプレス","weight":13.5,"reps":8,"memo":"","exported":true},{"date":"2026-02-28","name":"オーバーヘッドプレス","weight":13.5,"reps":8,"memo":"","exported":true},{"date":"2026-02-28","name":"ハンマーカール","weight":6.5,"reps":null,"memo":"回数記録なし","exported":true},{"date":"2026-02-28","name":"ハンマーカール","weight":6.5,"reps":null,"memo":"回数記録なし","exported":true},{"date":"2026-02-28","name":"プレスダウン","weight":31,"reps":null,"memo":"回数記録なし","exported":true},{"date":"2026-02-28","name":"プレスダウン","weight":31,"reps":null,"memo":"回数記録なし","exported":true},{"date":"2026-03-07","name":"ブルガリアンスクワット","weight":13.5,"reps":12,"memo":"","exported":true},{"date":"2026-03-07","name":"ブルガリアンスクワット","weight":13.5,"reps":10,"memo":"","exported":true},{"date":"2026-03-07","name":"スミスマシンベンチプレス","weight":30,"reps":10,"memo":"","exported":true},{"date":"2026-03-07","name":"スミスマシンベンチプレス","weight":35,"reps":10,"memo":"","exported":true},{"date":"2026-03-07","name":"スミスマシンベンチプレス","weight":40,"reps":5,"memo":"","exported":true},{"date":"2026-03-07","name":"サイドレイズ","weight":4.5,"reps":12,"memo":"元記録45.5（誤記と推定し4.5に補正）","exported":true},{"date":"2026-03-07","name":"サイドレイズ","weight":4.5,"reps":12,"memo":"同左","exported":true},{"date":"2026-03-07","name":"サイドレイズ","weight":4.5,"reps":12,"memo":"同左","exported":true},{"date":"2026-03-07","name":"スカルクラッシャー","weight":15,"reps":10,"memo":"","exported":true},{"date":"2026-03-07","name":"スカルクラッシャー","weight":15,"reps":10,"memo":"","exported":true},{"date":"2026-03-07","name":"スカルクラッシャー","weight":15,"reps":12,"memo":"","exported":true},{"date":"2026-03-15","name":"デッドリフト","weight":24,"reps":10,"memo":"","exported":true},{"date":"2026-03-15","name":"デッドリフト","weight":24,"reps":10,"memo":"","exported":true},{"date":"2026-03-15","name":"デッドリフト","weight":24,"reps":8,"memo":"","exported":true},{"date":"2026-03-15","name":"スミスマシンベンチプレス","weight":40,"reps":7,"memo":"","exported":true},{"date":"2026-03-15","name":"スミスマシンベンチプレス","weight":40,"reps":7,"memo":"","exported":true},{"date":"2026-03-15","name":"スミスマシンベンチプレス","weight":45,"reps":2,"memo":"","exported":true},{"date":"2026-03-15","name":"EZバーカール","weight":20,"reps":10,"memo":"","exported":true},{"date":"2026-03-15","name":"EZバーカール","weight":20,"reps":10,"memo":"","exported":true},{"date":"2026-03-15","name":"EZバーカール","weight":20,"reps":12,"memo":"","exported":true},{"date":"2026-03-20","name":"スミスマシンスクワット","weight":65,"reps":10,"memo":"元表記:SQW","exported":true},{"date":"2026-03-20","name":"スミスマシンスクワット","weight":65,"reps":10,"memo":"","exported":true},{"date":"2026-03-20","name":"スミスマシンスクワット","weight":70,"reps":5,"memo":"","exported":true},{"date":"2026-03-20","name":"ダンベルプレス","weight":16,"reps":8,"memo":"","exported":true},{"date":"2026-03-20","name":"ダンベルプレス","weight":16,"reps":8,"memo":"","exported":true},{"date":"2026-03-20","name":"ダンベルプレス","weight":13.5,"reps":6,"memo":"","exported":true},{"date":"2026-03-20","name":"ケーブルカール","weight":40,"reps":10,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-03-20","name":"ケーブルカール","weight":40,"reps":10,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-03-20","name":"ケーブルカール","weight":40,"reps":10,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-04-05","name":"ブルガリアンスクワット","weight":16,"reps":10,"memo":"","exported":true},{"date":"2026-04-05","name":"ブルガリアンスクワット","weight":16,"reps":12,"memo":"","exported":true},{"date":"2026-04-05","name":"チンニング","weight":null,"reps":10,"memo":"元記録の数値を回数と解釈","exported":true},{"date":"2026-04-05","name":"チンニング","weight":null,"reps":10,"memo":"","exported":true},{"date":"2026-04-05","name":"チンニング","weight":null,"reps":10,"memo":"","exported":true},{"date":"2026-04-05","name":"ダンベルプレス","weight":18,"reps":4,"memo":"","exported":true},{"date":"2026-04-05","name":"ダンベルプレス","weight":16,"reps":4,"memo":"","exported":true},{"date":"2026-04-05","name":"ハンマーカール","weight":8,"reps":15,"memo":"","exported":true},{"date":"2026-04-05","name":"ハンマーカール","weight":8,"reps":15,"memo":"","exported":true},{"date":"2026-04-12","name":"デッドリフト","weight":65,"reps":10,"memo":"","exported":true},{"date":"2026-04-12","name":"デッドリフト","weight":65,"reps":10,"memo":"","exported":true},{"date":"2026-04-12","name":"デッドリフト","weight":65,"reps":10,"memo":"","exported":true},{"date":"2026-04-12","name":"ワンハンドロウ","weight":18,"reps":10,"memo":"","exported":true},{"date":"2026-04-12","name":"ワンハンドロウ","weight":18,"reps":10,"memo":"","exported":true},{"date":"2026-04-12","name":"スミスマシンベンチプレス","weight":40,"reps":10,"memo":"","exported":true},{"date":"2026-04-12","name":"スミスマシンベンチプレス","weight":40,"reps":10,"memo":"","exported":true},{"date":"2026-04-12","name":"スミスマシンベンチプレス","weight":45,"reps":4,"memo":"","exported":true},{"date":"2026-04-12","name":"プレスダウン","weight":30,"reps":10,"memo":"元表記:ロープ／P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-04-12","name":"プレスダウン","weight":30,"reps":5,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-04-12","name":"インクラインカール","weight":6.5,"reps":12,"memo":"","exported":true},{"date":"2026-04-12","name":"インクラインカール","weight":6.5,"reps":12,"memo":"","exported":true},{"date":"2026-04-19","name":"スミスマシンスクワット","weight":65,"reps":10,"memo":"元表記:SQW","exported":true},{"date":"2026-04-19","name":"スミスマシンスクワット","weight":60,"reps":10,"memo":"","exported":true},{"date":"2026-04-19","name":"スミスマシンスクワット","weight":60,"reps":10,"memo":"","exported":true},{"date":"2026-04-19","name":"チンニング","weight":null,"reps":8,"memo":"パラレルグリップ・トレーナー補助あり","exported":true},{"date":"2026-04-19","name":"スミスマシンベンチプレス","weight":45,"reps":4,"memo":"","exported":true},{"date":"2026-04-19","name":"スミスマシンベンチプレス","weight":40,"reps":10,"memo":"","exported":true},{"date":"2026-04-19","name":"スミスマシンベンチプレス","weight":40,"reps":10,"memo":"","exported":true},{"date":"2026-04-19","name":"サイドレイズ","weight":4.5,"reps":15,"memo":"","exported":true},{"date":"2026-04-19","name":"サイドレイズ","weight":4.5,"reps":12,"memo":"","exported":true},{"date":"2026-04-19","name":"リアレイズ","weight":4.5,"reps":15,"memo":"","exported":true},{"date":"2026-04-19","name":"リアレイズ","weight":4.5,"reps":10,"memo":"","exported":true},{"date":"2026-05-02","name":"ブルガリアンスクワット","weight":30,"reps":10,"memo":"スミスマシン","exported":true},{"date":"2026-05-02","name":"ブルガリアンスクワット","weight":30,"reps":10,"memo":"スミスマシン","exported":true},{"date":"2026-05-02","name":"ベントロー","weight":35,"reps":15,"memo":"","exported":true},{"date":"2026-05-02","name":"ベントロー","weight":35,"reps":15,"memo":"","exported":true},{"date":"2026-05-02","name":"ベントロー","weight":35,"reps":15,"memo":"","exported":true},{"date":"2026-05-02","name":"ダンベルプレス","weight":16,"reps":15,"memo":"","exported":true},{"date":"2026-05-02","name":"ダンベルプレス","weight":16,"reps":15,"memo":"","exported":true},{"date":"2026-05-02","name":"ダンベルプレス","weight":16,"reps":15,"memo":"","exported":true},{"date":"2026-05-02","name":"スカルクラッシャー","weight":20,"reps":8,"memo":"","exported":true},{"date":"2026-05-02","name":"スカルクラッシャー","weight":20,"reps":8,"memo":"","exported":true},{"date":"2026-05-02","name":"EZバーカール","weight":20,"reps":12,"memo":"","exported":true},{"date":"2026-05-02","name":"EZバーカール","weight":20,"reps":12,"memo":"","exported":true},{"date":"2026-05-10","name":"スミスマシンスクワット","weight":70,"reps":8,"memo":"元表記:SQW","exported":true},{"date":"2026-05-10","name":"スミスマシンスクワット","weight":70,"reps":8,"memo":"","exported":true},{"date":"2026-05-10","name":"スミスマシンスクワット","weight":70,"reps":10,"memo":"","exported":true},{"date":"2026-05-10","name":"チンニング","weight":null,"reps":8,"memo":"足を台に載せてトレーナー補助あり・自重","exported":true},{"date":"2026-05-10","name":"チンニング","weight":null,"reps":8,"memo":"同左","exported":true},{"date":"2026-05-10","name":"チンニング","weight":null,"reps":8,"memo":"同左","exported":true},{"date":"2026-05-10","name":"インクラインベンチプレス","weight":30,"reps":15,"memo":"スミスマシン","exported":true},{"date":"2026-05-10","name":"インクラインベンチプレス","weight":30,"reps":15,"memo":"スミスマシン","exported":true},{"date":"2026-05-10","name":"インクラインベンチプレス","weight":40,"reps":5,"memo":"スミスマシン","exported":true},{"date":"2026-05-10","name":"サイドレイズ","weight":4.5,"reps":15,"memo":"","exported":true},{"date":"2026-05-10","name":"サイドレイズ","weight":4.5,"reps":15,"memo":"","exported":true},{"date":"2026-05-10","name":"サイドレイズ","weight":4.5,"reps":15,"memo":"","exported":true},{"date":"2026-05-10","name":"リアレイズ","weight":4.5,"reps":15,"memo":"","exported":true},{"date":"2026-05-10","name":"リアレイズ","weight":4.5,"reps":15,"memo":"","exported":true},{"date":"2026-05-10","name":"リアレイズ","weight":4.5,"reps":15,"memo":"","exported":true},{"date":"2026-05-15","name":"デッドリフト","weight":7.5,"reps":5,"memo":"重量7.5は元記録のまま（要確認）","exported":true},{"date":"2026-05-15","name":"デッドリフト","weight":7.5,"reps":5,"memo":"同左","exported":true},{"date":"2026-05-15","name":"デッドリフト","weight":7.5,"reps":8,"memo":"同左","exported":true},{"date":"2026-05-15","name":"ベンチプレス","weight":35,"reps":10,"memo":"元表記:BPフリーウェイト","exported":true},{"date":"2026-05-15","name":"ベンチプレス","weight":35,"reps":10,"memo":"","exported":true},{"date":"2026-05-15","name":"ベンチプレス","weight":35,"reps":10,"memo":"","exported":true},{"date":"2026-05-15","name":"アームカール","weight":22.5,"reps":8,"memo":"元表記:アールカール","exported":true},{"date":"2026-05-15","name":"アームカール","weight":22.5,"reps":8,"memo":"","exported":true},{"date":"2026-05-15","name":"アームカール","weight":22.5,"reps":8,"memo":"","exported":true},{"date":"2026-05-15","name":"プレスダウン","weight":40,"reps":15,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-05-15","name":"プレスダウン","weight":40,"reps":15,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-05-15","name":"プレスダウン","weight":40,"reps":15,"memo":"P表記（マシン目盛のためkgではない可能性）","exported":true},{"date":"2026-05-23","name":"ブルガリアンスクワット","weight":18,"reps":10,"memo":"","exported":true},{"date":"2026-05-23","name":"ブルガリアンスクワット","weight":18,"reps":10,"memo":"","exported":true},{"date":"2026-05-23","name":"チンニング","weight":null,"reps":10,"memo":"","exported":true},{"date":"2026-05-23","name":"インクラインベンチプレス","weight":40,"reps":7,"memo":"スミスマシン","exported":true},{"date":"2026-05-23","name":"インクラインベンチプレス","weight":40,"reps":7,"memo":"スミスマシン","exported":true},{"date":"2026-05-23","name":"インクラインベンチプレス","weight":40,"reps":7,"memo":"スミスマシン","exported":true},{"date":"2026-07-01","name":"レッグエクステンション","weight":14,"reps":10,"memo":"初回説明","exported":true},{"date":"2026-07-03","name":"レッグエクステンション","weight":30,"reps":14,"memo":"レッグエクステンション","exported":true},{"date":"2026-07-03","name":"レッグエクステンション","weight":30,"reps":17,"memo":"","exported":true},{"date":"2026-07-03","name":"レッグエクステンション","weight":30,"reps":15,"memo":"","exported":true},{"date":"2026-07-03","name":"インナーサイ","weight":35,"reps":15,"memo":"inner outer thigh adductor","exported":true},{"date":"2026-07-03","name":"インナーサイ","weight":40,"reps":15,"memo":"inner","exported":true},{"date":"2026-07-03","name":"インナーサイ","weight":40,"reps":11,"memo":"inner","exported":true},{"date":"2026-07-03","name":"アウターサイ","weight":30,"reps":15,"memo":"outer","exported":true},{"date":"2026-07-03","name":"アウターサイ","weight":30,"reps":17,"memo":"outer","exported":true},{"date":"2026-07-03","name":"アウターサイ","weight":30,"reps":18,"memo":"outer","exported":true},{"date":"2026-07-03","name":"レッグプレス","weight":50,"reps":13,"memo":"","exported":true},{"date":"2026-07-03","name":"レッグプレス","weight":50,"reps":15,"memo":"","exported":true},{"date":"2026-07-03","name":"レッグプレス","weight":55,"reps":15,"memo":"","exported":true},{"date":"2026-07-03","name":"バタフライマシン","weight":30,"reps":15,"memo":"バタフライマシーン","exported":true},{"date":"2026-07-03","name":"バタフライマシン","weight":30,"reps":10,"memo":"バタフライマシーン","exported":true},{"date":"2026-07-03","name":"バタフライマシン","weight":30,"reps":10,"memo":"バタフライマシーン","exported":true},{"date":"2026-07-03","name":"ラットプルダウン","weight":20,"reps":15,"memo":"ラットプルダウン","exported":true},{"date":"2026-07-03","name":"ラットプルダウン","weight":30,"reps":14,"memo":"","exported":true},{"date":"2026-07-03","name":"ラットプルダウン","weight":30,"reps":12,"memo":"ラットプルダウン","exported":true},{"date":"2026-07-09","name":"ラットプルダウン","weight":3,"reps":12,"memo":"","exported":true},{"date":"2026-07-09","name":"ラットプルダウン","weight":3,"reps":12,"memo":"","exported":true},{"date":"2026-07-09","name":"ラットプルダウン","weight":3,"reps":12,"memo":"","exported":true},{"date":"2026-07-10","name":"ショルダープレス","weight":10,"reps":12,"memo":"しーてぃっとショルダープレス","exported":true},{"date":"2026-07-13","name":"レッグエクステンション","weight":35,"reps":12,"memo":"","exported":true},{"date":"2026-07-13","name":"レッグエクステンション","weight":40,"reps":12,"memo":"","exported":true},{"date":"2026-07-13","name":"レッグエクステンション","weight":40,"reps":12,"memo":"","exported":true},{"date":"2026-07-13","name":"レッグプレス","weight":10,"reps":12,"memo":"proneレッグプレス","exported":true},{"date":"2026-07-13","name":"レッグプレス","weight":10,"reps":15,"memo":"proneレッグプレス　ワークアウト","exported":true},{"date":"2026-07-13","name":"レッグプレス","weight":10,"reps":14,"memo":"proneレッグプレス　ワークアウト","exported":true},{"date":"2026-07-13","name":"アームカール","weight":2.5,"reps":10,"memo":"","exported":true},{"date":"2026-07-13","name":"アームカール","weight":2.5,"reps":10,"memo":"","exported":true},{"date":"2026-07-13","name":"アームカール","weight":2.5,"reps":15,"memo":"ワークアウト","exported":true},{"date":"2026-07-15","name":"レッグプレス","weight":10,"reps":10,"memo":"prone","exported":true},{"date":"2026-07-15","name":"レッグプレス","weight":15,"reps":13,"memo":"porne","exported":true},{"date":"2026-07-15","name":"レッグプレス","weight":15,"reps":13,"memo":"porne","exported":true},{"date":"2026-07-15","name":"レッグプレス","weight":15,"reps":12,"memo":"prone","exported":true},{"date":"2026-07-15","name":"レッグプレス","weight":5,"reps":10,"memo":"斜め","exported":true},{"date":"2026-07-15","name":"レッグプレス","weight":40,"reps":10,"memo":"斜め","exported":true},{"date":"2026-07-15","name":"レッグプレス","weight":40,"reps":12,"memo":"斜め","exported":true},{"date":"2026-07-15","name":"レッグプレス","weight":40,"reps":13,"memo":"斜め","exported":true},{"date":"2026-07-15","name":"レッグエクステンション","weight":40,"reps":10,"memo":"","exported":true},{"date":"2026-07-15","name":"レッグエクステンション","weight":40,"reps":10,"memo":"","exported":true},{"date":"2026-07-15","name":"レッグエクステンション","weight":40,"reps":10,"memo":"","exported":true},{"date":"2026-07-15","name":"アームカール","weight":2.5,"reps":10,"memo":"","exported":true},{"date":"2026-07-15","name":"アームカール","weight":2.5,"reps":10,"memo":"","exported":true},{"date":"2026-07-15","name":"アームカール","weight":2.5,"reps":15,"memo":"","exported":true},{"date":"2026-07-15","name":"ケーブルカール","weight":20,"reps":10,"memo":"ロープのやつ","exported":true},{"date":"2026-07-15","name":"ケーブルカール","weight":25,"reps":10,"memo":"ケーブルのやつ","exported":true},{"date":"2026-07-24","name":"レッグエクステンション","weight":35,"reps":10,"memo":"","exported":true},{"date":"2026-07-24","name":"レッグエクステンション","weight":35,"reps":10,"memo":"","exported":true},{"date":"2026-07-24","name":"レッグエクステンション","weight":35,"reps":10,"memo":"","exported":true},{"date":"2026-07-24","name":"ショルダープレス","weight":15,"reps":10,"memo":"しーてぃっと","exported":true},{"date":"2026-07-27","name":"バタフライマシン","weight":30,"reps":10,"memo":"","exported":true},{"date":"2026-07-27","name":"バタフライマシン","weight":35,"reps":10,"memo":"首つりそう","exported":true},{"date":"2026-07-27","name":"ペクトーラルフライ　リアデルトールド　","weight":10,"reps":10,"memo":"","exported":true},{"date":"2026-07-27","name":"アームカール","weight":2.5,"reps":15,"memo":"","exported":true},{"date":"2026-07-27","name":"アームカール","weight":2.5,"reps":13,"memo":"オーバー","exported":true},{"date":"2026-07-27","name":"アームカール","weight":2.5,"reps":10,"memo":"","exported":true},{"date":"2026-07-27","name":"ケーブルカール","weight":25,"reps":10,"memo":"","exported":true},{"date":"2026-07-27","name":"ケーブルカール","weight":30,"reps":10,"memo":"","exported":true},{"date":"2026-07-27","name":"ケーブルカール","weight":30,"reps":13,"memo":"","exported":true}]};
+const KEY = 'gymlog.v1';
+const PARTS = ['脚','背中','胸','肩','腕','その他'];
+
+let db = load();
+let state = { screen:'home', date: todayStr(), part:'全て', name:null };
+
+function load(){
+  try{ const s = localStorage.getItem(KEY); if(s){ const d = JSON.parse(s); if(d && d.records && d.master) return d; } }catch(e){}
+  const d = { master: SEED.master.map(m=>({...m})), records: SEED.records.map((r,i)=>({id:'seed'+i, ...r})) };
+  save(d); return d;
+}
+function save(d){ localStorage.setItem(KEY, JSON.stringify(d||db)); }
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function md(s){ const [y,m,d]=s.split('-'); return (+m)+'/'+(+d); }
+function ymd(s){ const [y,m,d]=s.split('-'); return y+'/'+(+m)+'/'+(+d); }
+function fmtW(w){ return (w===null||w===undefined||w==='')?'自重':(+w)+'kg'; }
+function setStr(r){ return (r.weight===null||r.weight===undefined||r.weight==='') ? r.reps+'回' : (+r.weight)+'×'+r.reps; }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1400); }
+function masterOf(name){ return db.master.find(m=>m.name===name); }
+function sortJa(arr){ return arr.sort((a,b)=>a.localeCompare(b,'ja')); }
+
+// ---- 前回実績 ----
+function lastSession(name, before){
+  const rs = db.records.filter(r=>r.name===name && r.date<before);
+  if(!rs.length) return null;
+  const d = rs.reduce((m,r)=>r.date>m?r.date:m, '');
+  return { date:d, sets: rs.filter(r=>r.date===d) };
+}
+function topSet(sets){
+  const w = Math.max(...sets.map(s=>+s.weight||0));
+  const reps = Math.max(...sets.filter(s=>(+s.weight||0)===w).map(s=>+s.reps||0));
+  return {weight: w, reps};
+}
+function best(name){
+  const rs = db.records.filter(r=>r.name===name && (+r.weight||0)>0);
+  if(!rs.length) return null;
+  return topSet(rs);
+}
+
+// ---- 画面遷移 ----
+function go(s){
+  state.screen = s;
+  document.querySelectorAll('.screen').forEach(el=>el.classList.toggle('active', el.id==='s-'+s));
+  ['home','export','settings'].forEach(k=>document.getElementById('n-'+k).classList.toggle('on', s===k || (k==='home'&&(s==='pick'||s==='entry'))));
+  if(s==='home') renderHome(); if(s==='pick') renderPicker(); if(s==='entry') renderEntry(); if(s==='export') renderExport(); if(s==='settings') renderSettings();
+  window.scrollTo(0,0);
+}
+
+// ---- 今日 ----
+function renderHome(){
+  document.getElementById('date').value = state.date;
+  const rs = db.records.filter(r=>r.date===state.date);
+  const groups = [];
+  rs.forEach(r=>{ let g=groups.find(g=>g.name===r.name); if(!g){g={name:r.name,sets:[]};groups.push(g);} g.sets.push(r); });
+  const vol = rs.reduce((a,r)=>a+((+r.weight||0)*(+r.reps||0)),0);
+  document.getElementById('home-stat').textContent = rs.length? rs.length+'セット / '+Math.round(vol).toLocaleString()+'kg' : '';
+  const el = document.getElementById('home-list');
+  if(!groups.length){ el.innerHTML = '<div class="empty"><b>まだ記録がありません</b>種目を選んで、1セット目から</div>'; return; }
+  el.innerHTML = '<div class="card">'+groups.map(g=>`
+    <button class="today-group" style="display:block;width:100%;text-align:left" onclick="openEntry('${esc(g.name)}')">
+      <div class="row"><span class="name grow">${esc(g.name)}</span><span class="small muted">${g.sets.length}セット</span></div>
+      <div class="chips num">${g.sets.map(s=>'<span class="chip today">'+setStr(s)+'</span>').join('')}</div>
+    </button>`).join('')+'</div>';
+}
+document.getElementById('date').addEventListener('change', e=>{ state.date = e.target.value || todayStr(); renderHome(); });
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// ---- 種目選択 ----
+function openPicker(){ document.getElementById('q').value=''; go('pick'); }
+function renderPicker(){
+  document.getElementById('pick-date').textContent = ymd(state.date);
+  const pe = document.getElementById('parts');
+  pe.innerHTML = ['全て',...PARTS].map(p=>`<button class="part ${state.part===p?'on':''}" onclick="state.part='${p}';renderPicker()">${p}</button>`).join('');
+  const q = document.getElementById('q').value.trim();
+  let names = db.master.filter(m=>state.part==='全て'||m.part===state.part).map(m=>m.name);
+  if(q) names = names.filter(n=>n.includes(q));
+  sortJa(names);
+  // 最近やった種目（直近3回のトレーニング日）
+  const dates = [...new Set(db.records.map(r=>r.date))].sort().reverse().slice(0,3);
+  const recent = [...new Set(db.records.filter(r=>dates.includes(r.date)).map(r=>r.name))].filter(n=>names.includes(n));
+  const row = n=>{
+    const m = masterOf(n)||{}; const ls = lastSession(n, '9999');
+    const last = ls ? setStr(topSet(ls.sets))+'<br><span class="sub">'+md(ls.date)+'</span>' : '<span class="sub">未実施</span>';
+    return `<button class="item" onclick="openEntry('${esc(n)}')"><div class="grow"><div class="nm">${esc(n)}</div><div class="sub">${esc(m.part||'')}${m.unit&&m.unit!=='総重量'?' ・ '+esc(m.unit):''}</div></div><div class="last num">${last}</div></button>`;
+  };
+  let html = '';
+  if(!q && recent.length){ html += '<h2>最近やった</h2><div class="list">'+recent.map(row).join('')+'</div>'; }
+  html += '<h2>'+(state.part==='全て'?'全種目':state.part)+'（あいうえお順）</h2>';
+  html += names.length ? '<div class="list">'+names.map(row).join('')+'</div>' : '<div class="empty">該当する種目がありません。「種目」タブから追加できます</div>';
+  document.getElementById('pick-list').innerHTML = html;
+}
+
+// ---- セット入力 ----
+function openEntry(name){ state.name = name; go('entry'); }
+function renderEntry(){
+  const name = state.name; const m = masterOf(name)||{};
+  document.getElementById('entry-name').textContent = name;
+  document.getElementById('entry-part').textContent = (m.part||'')+(m.unit?'・'+m.unit:'');
+  const ls = lastSession(name, state.date);
+  document.getElementById('prev-lbl').textContent = ls ? '前回 '+ymd(ls.date) : '前回';
+  document.getElementById('prev-sets').innerHTML = ls ? ls.sets.map(setStr).join(' <span class="faint">/</span> ') : '<span class="faint">初めての種目</span>';
+  const b = best(name);
+  document.getElementById('prev-best').textContent = b ? b.weight+'kg×'+b.reps : '—';
+  // 初期値：今日の最後のセット → 前回のトップセット
+  const today = db.records.filter(r=>r.date===state.date && r.name===name);
+  const src = today.length ? today[today.length-1] : (ls ? topSet(ls.sets) : null);
+  const bw = document.getElementById('bw');
+  const isBW = src ? !(+src.weight>0) && (m.unit==='自重' || src.weight===null||src.weight===undefined||src.weight==='') : (m.unit==='自重');
+  bw.checked = isBW;
+  document.getElementById('w').value = (src && +src.weight>0) ? +src.weight : '';
+  document.getElementById('r').value = src ? (src.reps||'') : '';
+  document.getElementById('memo').value = '';
+  toggleBW();
+  renderTodaySets();
+}
+function toggleBW(){ const on=document.getElementById('bw').checked; document.getElementById('wctrl').style.opacity = on?.35:1; document.getElementById('wctrl').style.pointerEvents = on?'none':'auto'; }
+function stepW(d){ const el=document.getElementById('w'); let v=(+el.value||0)+d; if(v<0)v=0; el.value = Math.round(v*100)/100; }
+function stepR(d){ const el=document.getElementById('r'); let v=(+el.value||0)+d; if(v<0)v=0; el.value=v; }
+function addSet(){
+  const bw = document.getElementById('bw').checked;
+  const w = bw ? null : (document.getElementById('w').value===''?null:+document.getElementById('w').value);
+  const r = +document.getElementById('r').value;
+  if(!r){ toast('回数を入れてください'); return; }
+  if(!bw && w===null){ toast('重量を入れるか、自重にチェック'); return; }
+  db.records.push({ id:uid(), date:state.date, name:state.name, weight:w, reps:r, memo:document.getElementById('memo').value.trim(), exported:false });
+  save(); document.getElementById('memo').value='';
+  renderTodaySets(); updateBadge();
+  const n = db.records.filter(x=>x.date===state.date && x.name===state.name).length;
+  toast(n+'セット目を追加');
+}
+function renderTodaySets(){
+  const rs = db.records.filter(r=>r.date===state.date && r.name===state.name);
+  const el = document.getElementById('today-sets');
+  el.innerHTML = rs.length ? rs.map((r,i)=>`<div class="setrow"><span class="n">${i+1}</span><span class="v num">${fmtW(r.weight)} × ${r.reps}回</span><span class="m grow">${esc(r.memo||'')}</span><button class="del" aria-label="削除" onclick="delSet('${r.id}')">×</button></div>`).join('')
+    : '<div class="faint small">まだ今日のセットはありません</div>';
+}
+function delSet(id){ const r=db.records.find(x=>x.id===id); if(!r) return; if(r.exported && !confirm('Excelに貼り付け済みのセットです。ここで消してもExcel側は消えません。消しますか？')) return; db.records = db.records.filter(x=>x.id!==id); save(); renderTodaySets(); updateBadge(); }
+
+// ---- 書き出し ----
+function pending(){ return db.records.filter(r=>!r.exported).sort((a,b)=>a.date.localeCompare(b.date)); }
+function updateBadge(){ const n=pending().length; const b=document.getElementById('nbadge'); b.textContent=n; b.classList.toggle('hidden', n===0); }
+function renderExport(){
+  const p = pending();
+  document.getElementById('ex-count').textContent = p.length;
+  document.getElementById('ex-range').textContent = p.length ? ymd(p[0].date)+' 〜 '+ymd(p[p.length-1].date)+' の記録' : 'すべてExcelに貼り付け済みです';
+  document.getElementById('mark').disabled = p.length===0;
+  updateBadge();
+}
+function block(kind){
+  return pending().map(r=> kind==='abc' ? [ymd(r.date),'',r.name].join('\t')
+                                        : [(r.weight===null||r.weight===undefined)?'':r.weight, r.reps, (r.memo||'').replace(/[\t\n]/g,' ')].join('\t')).join('\n');
+}
+async function copyBlock(kind){
+  const txt = block(kind); if(!txt){ toast('未貼り付けの記録はありません'); return; }
+  try{ await navigator.clipboard.writeText(txt); toast((kind==='abc'?'A〜C列用':'E〜G列用')+'をコピーした'); }
+  catch(e){ const ta=document.getElementById('raw'); ta.value=txt; ta.classList.remove('hidden'); ta.focus(); ta.select(); toast('下の枠から手動でコピーしてください'); }
+}
+function markExported(){ const n=pending().length; if(!n) return; if(!confirm(n+'セットを貼り付け済みにします。よろしいですか？')) return; db.records.forEach(r=>r.exported=true); save(); document.getElementById('raw').classList.add('hidden'); renderExport(); toast('貼り付け済みにした'); }
+function downloadJSON(){ const blob=new Blob([JSON.stringify(db)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='筋トレ記録_backup_'+todayStr()+'.json'; a.click(); }
+function restoreJSON(inp){ const f=inp.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!d.records||!d.master) throw 0; if(!confirm('現在のデータを、読み込んだデータ（'+d.records.length+'セット）で置き換えます。よろしいですか？')) return; db=d; save(); toast('読み込んだ'); go('home'); }catch(e){ toast('読み込めないファイルです'); } }; rd.readAsText(f); inp.value=''; }
+async function shareCSV(){
+  const rows = [['日付','種目名','重量kg','回数','メモ'], ...db.records.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(r=>[ymd(r.date),r.name,(r.weight==null?'':r.weight),r.reps,(r.memo||'')])];
+  const csv = '\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const file = new File([csv],'筋トレ記録_'+todayStr()+'.csv',{type:'text/csv'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){ try{ await navigator.share({files:[file],title:'筋トレ記録'}); }catch(e){} }
+  else { const a=document.createElement('a'); a.href=URL.createObjectURL(file); a.download=file.name; a.click(); }
+}
+
+// ---- 設定 ----
+function renderSettings(){
+  const sel=document.getElementById('m-part'); if(!sel.options.length) sel.innerHTML=PARTS.map(p=>'<option>'+p+'</option>').join('');
+  const names = sortJa(db.master.map(m=>m.name));
+  document.getElementById('m-list').innerHTML = names.map(n=>{ const m=masterOf(n); return `<div class="mrow"><span class="pt">${esc(m.part)}</span><span class="nm">${esc(n)}</span><span class="small muted">${esc(m.unit||'')}</span><button class="del" aria-label="削除" onclick="delMaster('${esc(n)}')">×</button></div>`; }).join('');
+  const dates=new Set(db.records.map(r=>r.date));
+  document.getElementById('stat').textContent = db.records.length+'セット / '+dates.size+'日分の記録';
+}
+function addMaster(){
+  const name=document.getElementById('m-name').value.trim(); if(!name){ toast('種目名を入れてください'); return; }
+  if(masterOf(name)){ toast('同じ名前の種目があります'); return; }
+  db.master.push({name, part:document.getElementById('m-part').value, gear:'', unit:document.getElementById('m-unit').value});
+  save(); document.getElementById('m-name').value=''; renderSettings(); toast(name+' を追加した（Excelのマスターにも追加を）');
+}
+function delMaster(name){ const used=db.records.some(r=>r.name===name); if(used){ toast('記録がある種目は消せません'); return; } if(!confirm(name+' を削除しますか？')) return; db.master=db.master.filter(m=>m.name!==name); save(); renderSettings(); }
+function resetAll(){ if(!confirm('このiPhone内の記録と種目をすべて消します。Excel側は消えません。よろしいですか？')) return; if(!confirm('本当に消しますか？（元に戻せません）')) return; localStorage.removeItem(KEY); db=load(); go('home'); toast('初期状態に戻した'); }
+
+// ---- 起動 ----
+updateBadge(); go('home');
+</script>
+</body>
+</html>
