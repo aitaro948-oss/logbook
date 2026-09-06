@@ -4,12 +4,14 @@
 公開先: GitHub Pages（`https://aitaro948-oss.github.io/logbook/`）
 
 ## 構成
-logbook/
-├── index.html アプリ一覧ページ（サイトのトップ）
-├── README.md このファイル（運用手順）
-└── gym/
-└── index.html 筋トレ記録アプリ
 
+```
+logbook/
+├── index.html      アプリ一覧ページ（サイトのトップ）
+├── README.md       このファイル（運用手順）
+└── gym/
+    └── index.html  筋トレ記録アプリ
+```
 
 ## アプリを更新する（コードを直したとき）
 
@@ -49,6 +51,7 @@ logbook/
 ## 各アプリのメモ
 
 ### gym（筋トレ記録）
+
 - localStorageキー: `gymlog.v1`
 - 入力・分析・体重記録をアプリ内で完結。Excel連携なし（CSV書き出しのみ）
 - 最終バックアップから30日経つとホーム画面に警告バナーが出る
