@@ -121,6 +121,52 @@ nav svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;st
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
 :focus-visible{outline:2px solid var(--plate-blue);outline-offset:2px}
+/* 分析 */
+.tabs{display:flex;gap:6px;margin:4px 0 10px}
+.tab{flex:1;min-height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);font-weight:600;font-size:14px}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.periods{display:flex;gap:6px;margin-bottom:10px}
+.periods .part{flex:1;text-align:center;padding:6px 0;min-height:36px;font-size:14px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.kpi{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center}
+.kpi b{display:block;font-size:22px;font-weight:800;line-height:1.1}
+.kpi span{font-size:11px;color:var(--ink2)}
+.chart{width:100%;height:auto;display:block}
+.chart text{font-family:inherit;font-size:11px;fill:var(--ink2)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 12px;font-size:12px;color:var(--ink2);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .dow{text-align:center;font-size:11px;color:var(--ink3);padding-bottom:2px}
+.cal .d{aspect-ratio:1;border-radius:10px;background:var(--paper);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--ink2)}
+.cal .d.out{opacity:.25;border-style:dashed}
+.cal .d.hit{background:#DCEFE2;border-color:#A9D6B8;color:var(--ink);font-weight:700}
+.cal .d.hit::after{content:"💪";font-size:15px;line-height:1.1}
+.cal .d.today{outline:2px solid var(--plate-blue);outline-offset:-2px}
+.calnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.calnav b{font-size:17px}
+.calnav button{width:44px;height:40px;font-size:20px;color:var(--plate-blue)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:600;color:var(--ink2);font-size:12px;padding:4px 6px;border-bottom:1px solid var(--line)}
+.tbl td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl td.r,.tbl th.r{text-align:right}
+.pr{color:var(--plate-red);font-weight:700;font-size:11px;margin-left:4px}
+select.wide{width:100%;min-height:46px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;background:var(--paper);-webkit-appearance:none;font-size:16px;font-weight:600}
+.banner{background:#FBF3D6;border:1px solid #E8D48A;border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.banner b{display:block;margin-bottom:6px}
+.banner .btn{min-height:44px;font-size:15px}
+details.ex summary{cursor:pointer;font-weight:600;color:var(--ink2);padding:6px 0;list-style:none}
+details.ex summary::-webkit-details-marker{display:none}
+details.ex summary::before{content:"▸ ";color:var(--ink3)}
+details.ex[open] summary::before{content:"▾ "}
+.body-card{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.body-card .v{font-size:22px;font-weight:800}
+.body-card .v small{font-size:13px;font-weight:600;color:var(--ink2);margin-left:2px}
+.body-form{margin-bottom:10px}
+.mini .val{font-size:30px}
+.mini .sbtn{width:48px;height:48px;font-size:15px}
+.mrow{cursor:pointer}
+.mrow .arrow{color:var(--ink3)}
+.mrow.hid{opacity:.5}
 </style>
 </head>
 <body>
@@ -131,6 +177,8 @@ nav svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;st
     <div class="datebar"><input type="date" id="date"></div>
     <div class="small muted num" id="home-stat"></div>
   </div>
+  <div id="home-banner"></div>
+  <div id="body-card"></div>
   <div id="home-list"></div>
   <div style="margin-top:14px"><button class="btn primary" onclick="openPicker()">種目を選ぶ</button></div>
 </section>
@@ -178,41 +226,39 @@ nav svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;st
 </section>
 
 <!-- 書き出し -->
+<section class="screen" id="s-analysis">
+  <h1>分析</h1>
+  <div class="tabs">
+    <button class="tab" data-t="cal" onclick="aTab('cal')">カレンダー</button>
+    <button class="tab" data-t="trend" onclick="aTab('trend')">推移</button>
+    <button class="tab" data-t="ex" onclick="aTab('ex')">種目別</button>
+    <button class="tab" data-t="body" onclick="aTab('body')">体重</button>
+    <button class="tab" data-t="ai" onclick="aTab('ai')">AI用</button>
+  </div>
+  <div id="a-body"></div>
+</section>
+
 <section class="screen" id="s-export">
-  <h1>Excelへ書き出し</h1>
+  <h1>保存</h1>
   <div class="card">
-    <div class="count num"><span id="ex-count">0</span><small>セット 未貼り付け</small></div>
-    <div class="small muted" id="ex-range"></div>
-  </div>
-  <div class="card" style="margin-top:10px">
-    <ol class="steps">
-      <li>PCで筋トレ記録.xlsxの01_入力フォームを開き、最終行の次の空行を確認する
-      </li>
-      <li>日付・部位・種目名をコピーして、その空行の<b>A列</b>に「値のみ貼り付け」
-        <button class="btn ghost" onclick="copyBlock('abc')">A〜C列用をコピー</button></li>
-      <li>重量・回数・メモをコピーして、同じ行の<b>E列</b>に「値のみ貼り付け」
-        <button class="btn ghost" onclick="copyBlock('efg')">E〜G列用をコピー</button></li>
-      <li>貼り付けが終わったらここを押す。次回はその後の記録だけが対象になる
-        <button class="btn primary" id="mark" onclick="markExported()">貼り付け済みにする</button></li>
-    </ol>
-    <textarea class="raw hidden" id="raw" readonly></textarea>
-  </div>
-  <h2>バックアップ</h2>
-  <div class="card">
-    <p class="small muted" style="margin:0 0 8px">記録はこのiPhoneの中だけに保存されます。Excelへの貼り付けを済ませていれば、Excel側が正本です。念のため月1回は保存しておくと安心です。</p>
-    <button class="btn ghost" onclick="downloadJSON()">全データを保存（JSON）</button>
-    <div style="height:8px"></div>
-    <button class="btn ghost" onclick="document.getElementById('file').click()">保存したデータを読み込む</button>
+    <div class="small muted" id="bk-info"></div>
+    <div style="height:10px"></div>
+    <button class="btn primary" onclick="backupJSON()">バックアップを保存</button>
+    <p class="small muted" style="margin:8px 0 0">共有シートで「ファイルに保存」→ OneDrive のフォルダを選ぶ。ファイル名に日付が付くので上書きの心配はありません。</p>
+    <div style="height:10px"></div>
+    <button class="btn ghost" onclick="document.getElementById('file').click()">バックアップから復元</button>
     <input type="file" id="file" accept=".json,application/json" class="hidden" onchange="restoreJSON(this)">
     <div style="height:8px"></div>
-    <button class="btn ghost" onclick="shareCSV()">全記録をCSVで共有</button>
+    <button class="btn ghost" onclick="shareCSV()">筋トレ記録をCSVで共有（Excel等で見る用）</button>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <button class="btn ghost" onclick="shareBodyCSV()">体重記録をCSVで共有</button>
   </div>
 </section>
 
 <!-- 設定 -->
 <section class="screen" id="s-settings">
-  <h1>種目マスター</h1>
-  <p class="small muted" style="margin:0 0 10px">ここで追加した種目は、Excelの02_種目マスターにも同じ名前で追加してください（集計に必要）。</p>
+  <h1>種目</h1>
   <div class="card">
     <div class="field"><label>種目名</label><input id="m-name" type="text" placeholder="例：チェストプレス" autocomplete="off"></div>
     <div class="row">
@@ -221,18 +267,21 @@ nav svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;st
     </div>
     <div style="margin-top:12px"><button class="btn primary" onclick="addMaster()">種目を追加</button></div>
   </div>
-  <div class="card" style="margin-top:10px" id="m-list"></div>
-  <h2>データ</h2>
+  <div class="card hidden" style="margin-top:10px" id="m-detail"></div>
+  <p class="small muted" style="margin:10px 0 6px">種目をタップすると、部位・重量の入れ方の変更と削除ができます。</p>
+  <div class="card" id="m-list"></div>
+  <h2>体重</h2>
   <div class="card">
-    <div class="small muted num" id="stat"></div>
-    <div style="height:8px"></div>
-    <button class="btn danger" onclick="resetAll()">すべての記録を消去</button>
+    <div class="field"><label>身長（cm）BMIの計算に使う</label><input id="height" type="number" inputmode="decimal" step="0.1" placeholder="例：172.5" onchange="saveHeight(this.value)"></div>
   </div>
+  <h2>データ</h2>
+  <div class="card"><div class="small muted num" id="stat"></div></div>
 </section>
 
 <nav>
   <button id="n-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"/></svg>今日</button>
-  <button id="n-export" onclick="go('export')"><span class="badge hidden" id="nbadge"></span><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M4 20h16"/></svg>書き出し</button>
+  <button id="n-analysis" onclick="go('analysis')"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15l4-6 3 3 5-7"/></svg>分析</button>
+  <button id="n-export" onclick="go('export')"><span class="badge hidden" id="nbadge">!</span><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M4 20h16"/></svg>保存</button>
   <button id="n-settings" onclick="go('settings')"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>種目</button>
 </nav>
 <div id="toast"></div>
@@ -243,11 +292,11 @@ const KEY = 'gymlog.v1';
 const PARTS = ['脚','背中','胸','肩','腕','その他'];
 
 let db = load();
-let state = { screen:'home', date: todayStr(), part:'全て', name:null };
+let state = { screen:'home', date: todayStr(), part:'全て', name:null, aTab:'cal', weeks:12, calYM:todayStr().slice(0,7), aName:null };
 
 function load(){
-  try{ const s = localStorage.getItem(KEY); if(s){ const d = JSON.parse(s); if(d && d.records && d.master) return d; } }catch(e){}
-  const d = { master: SEED.master.map(m=>({...m})), records: SEED.records.map((r,i)=>({id:'seed'+i, ...r})) };
+  try{ const s = localStorage.getItem(KEY); if(s){ const d = JSON.parse(s); if(d && d.records && d.master){ d.meta = d.meta||{}; d.body = d.body||[]; return d; } } }catch(e){}
+  const d = { master: SEED.master.map(m=>({...m})), records: SEED.records.map((r,i)=>({id:'seed'+i, ...r})), meta:{}, body:[] };
   save(d); return d;
 }
 function save(d){ localStorage.setItem(KEY, JSON.stringify(d||db)); }
@@ -283,14 +332,15 @@ function best(name){
 function go(s){
   state.screen = s;
   document.querySelectorAll('.screen').forEach(el=>el.classList.toggle('active', el.id==='s-'+s));
-  ['home','export','settings'].forEach(k=>document.getElementById('n-'+k).classList.toggle('on', s===k || (k==='home'&&(s==='pick'||s==='entry'))));
-  if(s==='home') renderHome(); if(s==='pick') renderPicker(); if(s==='entry') renderEntry(); if(s==='export') renderExport(); if(s==='settings') renderSettings();
+  ['home','analysis','export','settings'].forEach(k=>document.getElementById('n-'+k).classList.toggle('on', s===k || (k==='home'&&(s==='pick'||s==='entry'))));
+  if(s==='home') renderHome(); if(s==='pick') renderPicker(); if(s==='entry') renderEntry(); if(s==='analysis') renderAnalysis(); if(s==='export') renderExport(); if(s==='settings') renderSettings();
   window.scrollTo(0,0);
 }
 
 // ---- 今日 ----
 function renderHome(){
   document.getElementById('date').value = state.date;
+  renderBanner(); renderBodyCard();
   const rs = db.records.filter(r=>r.date===state.date);
   const groups = [];
   rs.forEach(r=>{ let g=groups.find(g=>g.name===r.name); if(!g){g={name:r.name,sets:[]};groups.push(g);} g.sets.push(r); });
@@ -304,7 +354,7 @@ function renderHome(){
       <div class="chips num">${g.sets.map(s=>'<span class="chip today">'+setStr(s)+'</span>').join('')}</div>
     </button>`).join('')+'</div>';
 }
-document.getElementById('date').addEventListener('change', e=>{ state.date = e.target.value || todayStr(); renderHome(); });
+document.getElementById('date').addEventListener('change', e=>{ state.date = e.target.value || todayStr(); state.bodyEdit=false; renderHome(); });
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 // ---- 種目選択 ----
@@ -314,7 +364,7 @@ function renderPicker(){
   const pe = document.getElementById('parts');
   pe.innerHTML = ['全て',...PARTS].map(p=>`<button class="part ${state.part===p?'on':''}" onclick="state.part='${p}';renderPicker()">${p}</button>`).join('');
   const q = document.getElementById('q').value.trim();
-  let names = db.master.filter(m=>state.part==='全て'||m.part===state.part).map(m=>m.name);
+  let names = db.master.filter(m=>!m.hidden && (state.part==='全て'||m.part===state.part)).map(m=>m.name);
   if(q) names = names.filter(n=>n.includes(q));
   sortJa(names);
   // 最近やった種目（直近3回のトレーニング日）
@@ -337,7 +387,8 @@ function openEntry(name){ state.name = name; go('entry'); }
 function renderEntry(){
   const name = state.name; const m = masterOf(name)||{};
   document.getElementById('entry-name').textContent = name;
-  document.getElementById('entry-part').textContent = (m.part||'')+(m.unit?'・'+m.unit:'');
+  const bwRec = bodyBefore(state.date);
+  document.getElementById('entry-part').textContent = (m.part||'')+(m.unit?'・'+m.unit:'')+((m.unit==='自重'&&bwRec)?'・体重'+bwRec.weight+'kg':'');
   const ls = lastSession(name, state.date);
   document.getElementById('prev-lbl').textContent = ls ? '前回 '+ymd(ls.date) : '前回';
   document.getElementById('prev-sets').innerHTML = ls ? ls.sets.map(setStr).join(' <span class="faint">/</span> ') : '<span class="faint">初めての種目</span>';
@@ -376,30 +427,33 @@ function renderTodaySets(){
   el.innerHTML = rs.length ? rs.map((r,i)=>`<div class="setrow"><span class="n">${i+1}</span><span class="v num">${fmtW(r.weight)} × ${r.reps}回</span><span class="m grow">${esc(r.memo||'')}</span><button class="del" aria-label="削除" onclick="delSet('${r.id}')">×</button></div>`).join('')
     : '<div class="faint small">まだ今日のセットはありません</div>';
 }
-function delSet(id){ const r=db.records.find(x=>x.id===id); if(!r) return; if(r.exported && !confirm('Excelに貼り付け済みのセットです。ここで消してもExcel側は消えません。消しますか？')) return; db.records = db.records.filter(x=>x.id!==id); save(); renderTodaySets(); updateBadge(); }
+function delSet(id){ const r=db.records.find(x=>x.id===id); if(!r) return; if(!confirm(setStr(r)+' を削除しますか？')) return; db.records = db.records.filter(x=>x.id!==id); save(); renderTodaySets(); }
 
 // ---- 書き出し ----
-function pending(){ return db.records.filter(r=>!r.exported).sort((a,b)=>a.date.localeCompare(b.date)); }
-function updateBadge(){ const n=pending().length; const b=document.getElementById('nbadge'); b.textContent=n; b.classList.toggle('hidden', n===0); }
 function renderExport(){
-  const p = pending();
-  document.getElementById('ex-count').textContent = p.length;
-  document.getElementById('ex-range').textContent = p.length ? ymd(p[0].date)+' 〜 '+ymd(p[p.length-1].date)+' の記録' : 'すべてExcelに貼り付け済みです';
-  document.getElementById('mark').disabled = p.length===0;
+  const a = backupAge();
+  document.getElementById('bk-info').innerHTML = (a===null ? '<b>まだバックアップしていません</b>' : '最終バックアップ：<b>'+ymd(db.meta.lastBackupAt)+'</b>（'+a+'日前）') + '<br>'+db.records.length+'セット / '+new Set(db.records.map(r=>r.date)).size+'日分の記録';
   updateBadge();
 }
-function block(kind){
-  return pending().map(r=> kind==='abc' ? [ymd(r.date),'',r.name].join('\t')
-                                        : [(r.weight===null||r.weight===undefined)?'':r.weight, r.reps, (r.memo||'').replace(/[\t\n]/g,' ')].join('\t')).join('\n');
+// ---- バックアップ ----
+function updateBadge(){ document.getElementById('nbadge').classList.toggle('hidden', !backupOverdue()); }
+function backupAge(){ if(!db.meta||!db.meta.lastBackupAt) return null; return Math.floor((new Date(todayStr())-new Date(db.meta.lastBackupAt))/86400000); }
+function backupOverdue(){ const a=backupAge(); return a===null || a>=30; }
+function markBackup(){ db.meta.lastBackupAt = todayStr(); save(); updateBadge(); if(state.screen==='export') renderExport(); if(state.screen==='home') renderBanner(); toast('バックアップした'); }
+function renderBanner(){
+  const el=document.getElementById('home-banner'); const a=backupAge();
+  el.innerHTML = backupOverdue() ? '<div class="banner"><b>'+(a===null?'バックアップがまだありません':'バックアップから'+a+'日経っています')+'</b><button class="btn primary" onclick="backupJSON()">OneDriveにバックアップを保存</button></div>' : '';
 }
-async function copyBlock(kind){
-  const txt = block(kind); if(!txt){ toast('未貼り付けの記録はありません'); return; }
-  try{ await navigator.clipboard.writeText(txt); toast((kind==='abc'?'A〜C列用':'E〜G列用')+'をコピーした'); }
-  catch(e){ const ta=document.getElementById('raw'); ta.value=txt; ta.classList.remove('hidden'); ta.focus(); ta.select(); toast('下の枠から手動でコピーしてください'); }
+async function backupJSON(){
+  const name='筋トレ記録_backup_'+todayStr()+'.json';
+  const file=new File([JSON.stringify(db)],name,{type:'application/json'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],title:'筋トレ記録 バックアップ'}); markBackup(); }
+    catch(e){ if(e && e.name==='AbortError') toast('キャンセルしました'); else { downloadFile(file); markBackup(); } }
+  } else { downloadFile(file); markBackup(); }
 }
-function markExported(){ const n=pending().length; if(!n) return; if(!confirm(n+'セットを貼り付け済みにします。よろしいですか？')) return; db.records.forEach(r=>r.exported=true); save(); document.getElementById('raw').classList.add('hidden'); renderExport(); toast('貼り付け済みにした'); }
-function downloadJSON(){ const blob=new Blob([JSON.stringify(db)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='筋トレ記録_backup_'+todayStr()+'.json'; a.click(); }
-function restoreJSON(inp){ const f=inp.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!d.records||!d.master) throw 0; if(!confirm('現在のデータを、読み込んだデータ（'+d.records.length+'セット）で置き換えます。よろしいですか？')) return; db=d; save(); toast('読み込んだ'); go('home'); }catch(e){ toast('読み込めないファイルです'); } }; rd.readAsText(f); inp.value=''; }
+function downloadFile(file){ const a=document.createElement('a'); a.href=URL.createObjectURL(file); a.download=file.name; a.click(); }
+function restoreJSON(inp){ const f=inp.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!d.records||!d.master) throw 0; if(!confirm('現在のデータを、読み込んだデータ（'+d.records.length+'セット）で置き換えます。よろしいですか？')) return; d.meta=d.meta||{}; d.body=d.body||[]; db=d; save(); toast('読み込んだ'); go('home'); }catch(e){ toast('読み込めないファイルです'); } }; rd.readAsText(f); inp.value=''; }
 async function shareCSV(){
   const rows = [['日付','種目名','重量kg','回数','メモ'], ...db.records.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(r=>[ymd(r.date),r.name,(r.weight==null?'':r.weight),r.reps,(r.memo||'')])];
   const csv = '\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
@@ -412,18 +466,210 @@ async function shareCSV(){
 function renderSettings(){
   const sel=document.getElementById('m-part'); if(!sel.options.length) sel.innerHTML=PARTS.map(p=>'<option>'+p+'</option>').join('');
   const names = sortJa(db.master.map(m=>m.name));
-  document.getElementById('m-list').innerHTML = names.map(n=>{ const m=masterOf(n); return `<div class="mrow"><span class="pt">${esc(m.part)}</span><span class="nm">${esc(n)}</span><span class="small muted">${esc(m.unit||'')}</span><button class="del" aria-label="削除" onclick="delMaster('${esc(n)}')">×</button></div>`; }).join('');
-  const dates=new Set(db.records.map(r=>r.date));
-  document.getElementById('stat').textContent = db.records.length+'セット / '+dates.size+'日分の記録';
+  document.getElementById('m-list').innerHTML = names.map(n=>{ const m=masterOf(n); return `<div class="mrow ${m.hidden?'hid':''}" onclick="openMaster('${esc(n)}')"><span class="pt">${esc(m.part)}</span><span class="nm">${esc(n)}${m.hidden?' <span class="small muted">（非表示）</span>':''}</span><span class="small muted">${esc(m.unit||'')}</span><span class="arrow">›</span></div>`; }).join('');
+  document.getElementById('height').value = db.meta.height||'';
+  document.getElementById('stat').textContent = db.records.length+'セット / '+new Set(db.records.map(r=>r.date)).size+'日分の筋トレ記録 / '+db.body.length+'日分の体重記録';
 }
+function saveHeight(v){ db.meta.height = v? +v : null; save(); toast('身長を保存しました'); }
+function openMaster(name){
+  const m=masterOf(name); if(!m) return; const n=db.records.filter(r=>r.name===name).length;
+  const el=document.getElementById('m-detail'); el.classList.remove('hidden');
+  el.innerHTML = `<div class="row"><b class="grow" style="font-size:17px">${esc(name)}</b><button class="back" onclick="closeMaster()">閉じる</button></div>
+    <div class="small muted">記録 ${n}セット${m.hidden?'・現在は種目選択に表示されません':''}</div>
+    <div class="row"><div class="field grow"><label>部位</label><select id="d-part">${PARTS.map(p=>`<option ${p===m.part?'selected':''}>${p}</option>`).join('')}</select></div>
+    <div class="field grow"><label>重量の入れ方</label><select id="d-unit">${['総重量','片手重量','自重','補助あり','その他'].map(u=>`<option ${u===m.unit?'selected':''}>${u}</option>`).join('')}</select></div></div>
+    <div style="margin-top:12px"><button class="btn primary" onclick="saveMaster('${esc(name)}')">変更を保存</button></div>
+    <div style="height:8px"></div>
+    ${m.hidden ? `<button class="btn ghost" onclick="unhideMaster('${esc(name)}')">種目選択に再表示する</button>`
+               : `<button class="btn danger" onclick="removeMaster('${esc(name)}')">${n?'この種目を非表示にする':'この種目を削除する'}</button>`}
+    ${n?'<p class="small muted" style="margin:8px 0 0">記録がある種目は削除せず「非表示」にします。過去の記録と分析はそのまま残り、種目選択の一覧から消えるだけです。</p>':''}`;
+  el.scrollIntoView({block:'nearest'});
+}
+function closeMaster(){ document.getElementById('m-detail').classList.add('hidden'); }
+function saveMaster(name){ const m=masterOf(name); m.part=document.getElementById('d-part').value; m.unit=document.getElementById('d-unit').value; save(); closeMaster(); renderSettings(); toast('保存した'); }
+function removeMaster(name){
+  const n=db.records.filter(r=>r.name===name).length;
+  if(n){ if(!confirm(name+' を種目選択から非表示にします。'+n+'セットの記録は残ります。よろしいですか？')) return; masterOf(name).hidden=true; toast('非表示にしました'); }
+  else { if(!confirm(name+' を削除します。記録はないので影響ありません。よろしいですか？')) return; db.master=db.master.filter(m=>m.name!==name); toast('削除しました'); }
+  save(); closeMaster(); renderSettings();
+}
+function unhideMaster(name){ delete masterOf(name).hidden; save(); closeMaster(); renderSettings(); toast('再表示しました'); }
 function addMaster(){
   const name=document.getElementById('m-name').value.trim(); if(!name){ toast('種目名を入れてください'); return; }
-  if(masterOf(name)){ toast('同じ名前の種目があります'); return; }
+  const ex=masterOf(name);
+  if(ex){ if(ex.hidden){ delete ex.hidden; save(); renderSettings(); toast(name+' は非表示だったので再表示しました'); } else toast('同じ名前の種目があります'); return; }
   db.master.push({name, part:document.getElementById('m-part').value, gear:'', unit:document.getElementById('m-unit').value});
-  save(); document.getElementById('m-name').value=''; renderSettings(); toast(name+' を追加した（Excelのマスターにも追加を）');
+  save(); document.getElementById('m-name').value=''; renderSettings(); toast(name+' を追加しました');
 }
-function delMaster(name){ const used=db.records.some(r=>r.name===name); if(used){ toast('記録がある種目は消せません'); return; } if(!confirm(name+' を削除しますか？')) return; db.master=db.master.filter(m=>m.name!==name); save(); renderSettings(); }
-function resetAll(){ if(!confirm('このiPhone内の記録と種目をすべて消します。Excel側は消えません。よろしいですか？')) return; if(!confirm('本当に消しますか？（元に戻せません）')) return; localStorage.removeItem(KEY); db=load(); go('home'); toast('初期状態に戻した'); }
+
+// ---- 体重 ----
+function bodyFor(d){ return db.body.find(b=>b.date===d); }
+function bodyBefore(d){ const l=db.body.filter(b=>b.date<=d).sort((a,b)=>a.date.localeCompare(b.date)); return l[l.length-1]||null; }
+function bmi(w){ const h=db.meta.height; return (w>0&&h>0)? Math.round(w/((h/100)*(h/100))*10)/10 : null; }
+function renderBodyCard(){
+  const el=document.getElementById('body-card'); const b=bodyFor(state.date);
+  if(state.bodyEdit){
+    const last=b||bodyBefore(state.date)||{};
+    el.innerHTML = `<div class="card body-form">
+      <div class="row"><b class="grow">${ymd(state.date)} の体重</b><button class="back" onclick="state.bodyEdit=false;renderBodyCard()">閉じる</button></div>
+      <div class="stepper mini"><div class="lbl"><span>体重</span></div><div class="ctrl">
+        <button class="sbtn" onclick="stepB('bw',-0.5)">−0.5</button><button class="sbtn" onclick="stepB('bw',-0.1)">−0.1</button>
+        <input class="val num" id="bw-w" type="number" inputmode="decimal" step="0.1" placeholder="0" value="${last.weight||''}"><span class="unit">kg</span>
+        <button class="sbtn" onclick="stepB('bw',0.1)">+0.1</button><button class="sbtn" onclick="stepB('bw',0.5)">+0.5</button></div></div>
+      <div class="stepper mini"><div class="lbl"><span>体脂肪率</span></div><div class="ctrl">
+        <button class="sbtn" onclick="stepB('bf',-0.5)">−0.5</button><button class="sbtn" onclick="stepB('bf',-0.1)">−0.1</button>
+        <input class="val num" id="bw-f" type="number" inputmode="decimal" step="0.1" placeholder="—" value="${last.fat||''}"><span class="unit">%</span>
+        <button class="sbtn" onclick="stepB('bf',0.1)">+0.1</button><button class="sbtn" onclick="stepB('bf',0.5)">+0.5</button></div></div>
+      <div class="row" style="margin-top:12px"><button class="btn primary grow" onclick="saveBody()">保存</button>${b?'<button class="btn danger" style="width:auto;padding:0 16px" onclick="delBody()">削除</button>':''}</div></div>`;
+    return;
+  }
+  const v = b ? `<span class="v num">${b.weight}<small>kg</small></span>${b.fat?`<span class="v num">${b.fat}<small>%</small></span>`:''}${bmi(b.weight)?`<span class="small muted num">BMI ${bmi(b.weight)}</span>`:''}` : '<span class="muted">体重 未記録</span>';
+  el.innerHTML = `<button class="card body-card" style="width:100%;text-align:left" onclick="state.bodyEdit=true;renderBodyCard()"><div class="grow row" style="gap:12px">${v}</div><span class="faint">›</span></button>`;
+}
+function stepB(k,d){ const el=document.getElementById(k==='bw'?'bw-w':'bw-f'); let v=(+el.value||0)+d; if(v<0)v=0; el.value=Math.round(v*10)/10; }
+function saveBody(){
+  const w=+document.getElementById('bw-w').value, f=+document.getElementById('bw-f').value;
+  if(!w){ toast('体重を入れてください'); return; }
+  const b=bodyFor(state.date); if(b){ b.weight=w; b.fat=f||null; } else db.body.push({date:state.date, weight:w, fat:f||null});
+  db.body.sort((a,b)=>a.date.localeCompare(b.date)); save(); state.bodyEdit=false; renderBodyCard(); toast('体重を記録した');
+}
+function delBody(){ if(!confirm(ymd(state.date)+' の体重記録を削除しますか？')) return; db.body=db.body.filter(b=>b.date!==state.date); save(); state.bodyEdit=false; renderBodyCard(); }
+async function shareBodyCSV(){
+  const rows=[['日付','体重kg','体脂肪率%','BMI'], ...db.body.map(b=>[ymd(b.date),b.weight,b.fat||'',bmi(b.weight)||''])];
+  const csv='\uFEFF'+rows.map(r=>r.join(',')).join('\r\n'); const file=new File([csv],'体重記録_'+todayStr()+'.csv',{type:'text/csv'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){ try{ await navigator.share({files:[file],title:'体重記録'}); }catch(e){} } else downloadFile(file);
+}
+function viewBody(){
+  const f=periodFrom(); const bs=db.body.filter(b=>b.date>=f && b.date<=todayStr());
+  if(!bs.length) return '<div class="empty"><b>この期間の体重記録がありません</b>今日の画面の「体重」から記録できます</div>';
+  const first=bs[0], last=bs[bs.length-1]; const diff=Math.round((last.weight-first.weight)*10)/10;
+  const labels=bs.map(b=>md(b.date)); const fats=bs.map(b=>b.fat||0);
+  const kp=`<div class="kpis"><div class="kpi"><b class="num">${last.weight}<small style="font-size:12px">kg</small></b><span>最新（${md(last.date)}）</span></div><div class="kpi"><b class="num">${diff>0?'+':''}${diff}</b><span>期間の増減kg</span></div><div class="kpi"><b class="num">${bmi(last.weight)||'—'}</b><span>BMI${db.meta.height?'':'（身長未設定）'}</span></div></div>`;
+  let h=kp+`<div class="card"><h2 style="margin:0 0 6px">体重kg</h2>${svgLines([{vals:bs.map(b=>b.weight),color:'#2456A4'}],labels)}</div>`;
+  if(fats.some(v=>v>0)) h+=`<div class="card"><h2 style="margin:0 0 6px">体脂肪率%</h2>${svgLines([{vals:fats,color:'#B8343A'}],labels)}</div>`;
+  h+=`<div class="card" style="margin-top:10px"><table class="tbl"><tr><th>日付</th><th class="r">体重</th><th class="r">体脂肪</th><th class="r">BMI</th></tr>${bs.slice().reverse().slice(0,14).map(b=>`<tr><td class="num">${md(b.date)}</td><td class="r num">${b.weight}</td><td class="r num">${b.fat||'—'}</td><td class="r num">${bmi(b.weight)||'—'}</td></tr>`).join('')}</table></div>`;
+  return h;
+}
+
+// ---- 分析 ----
+// ---- 分析 ----
+const PART_COLORS = {脚:'#2456A4',背中:'#2E7D4F',胸:'#B8343A',肩:'#E0B429',腕:'#7B4FA6',その他:'#9AA3A9'};
+function partOf(n){ const m=masterOf(n); return (m&&m.part)||'その他'; }
+function e1rm(w,r){ return (w>0&&r>0)? Math.round(w*(1+r/30)*10)/10 : 0; }
+function addDays(s,n){ const d=new Date(s+'T00:00:00'); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function weekStart(s){ const d=new Date(s+'T00:00:00'); const k=(d.getDay()+6)%7; return addDays(s,-k); }
+function periodFrom(){ return state.weeks? addDays(weekStart(todayStr()), -(state.weeks-1)*7) : '0000-00-00'; }
+function periodRecs(){ const f=periodFrom(); return db.records.filter(r=>r.date>=f && r.date<=todayStr()); }
+function sessionsOf(name, recs){
+  const by={}; (recs||db.records).filter(r=>r.name===name).forEach(r=>{ (by[r.date]=by[r.date]||[]).push(r); });
+  return Object.keys(by).sort().map(d=>{ const sets=by[d]; const top=topSet(sets);
+    return { date:d, sets, top, volume:sets.reduce((a,r)=>a+(+r.weight||0)*(+r.reps||0),0), e1:Math.max(...sets.map(s=>e1rm(+s.weight||0,+s.reps||0))) }; });
+}
+function aTab(t){ state.aTab=t; renderAnalysis(); }
+function setWeeks(w){ state.weeks=w; renderAnalysis(); }
+function periodChips(){ return '<div class="periods">'+[[4,'4週'],[12,'12週'],[26,'26週'],[0,'全期間']].map(([w,l])=>`<button class="part ${state.weeks===w?'on':''}" onclick="setWeeks(${w})">${l}</button>`).join('')+'</div>'; }
+function fmtKg(v){ return Math.round(v).toLocaleString(); }
+// SVG helpers
+function svgBars(vals, labels, color){
+  const W=360,H=170,pl=36,pr=8,pt=14,pb=22, n=vals.length||1, max=Math.max(...vals,1), bw=(W-pl-pr)/n;
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}">`;
+  s+=`<text x="${pl-4}" y="${pt+4}" text-anchor="end">${fmtKg(max)}</text><text x="${pl-4}" y="${H-pb}" text-anchor="end">0</text><line x1="${pl}" y1="${H-pb}" x2="${W-pr}" y2="${H-pb}" stroke="#D3D6CC"/>`;
+  vals.forEach((v,i)=>{ const h=(v/max)*(H-pt-pb); s+=`<rect x="${pl+i*bw+1}" y="${H-pb-h}" width="${Math.max(bw-2,1)}" height="${h}" rx="2" fill="${color}"/>`; });
+  [0,Math.floor((n-1)/2),n-1].filter((v,i,a)=>a.indexOf(v)===i).forEach(i=>{ if(labels[i]) s+=`<text x="${pl+i*bw+bw/2}" y="${H-6}" text-anchor="middle">${labels[i]}</text>`; });
+  return s+'</svg>';
+}
+function svgStacked(rows, labels){
+  const W=360,H=170,pl=30,pr=8,pt=14,pb=22, n=rows.length||1, max=Math.max(...rows.map(r=>Object.values(r).reduce((a,b)=>a+b,0)),1), bw=(W-pl-pr)/n;
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}"><text x="${pl-4}" y="${pt+4}" text-anchor="end">${max}</text><text x="${pl-4}" y="${H-pb}" text-anchor="end">0</text><line x1="${pl}" y1="${H-pb}" x2="${W-pr}" y2="${H-pb}" stroke="#D3D6CC"/>`;
+  rows.forEach((r,i)=>{ let y=H-pb; PARTS.forEach(p=>{ const v=r[p]||0; if(!v) return; const h=v/max*(H-pt-pb); y-=h; s+=`<rect x="${pl+i*bw+1}" y="${y}" width="${Math.max(bw-2,1)}" height="${h}" fill="${PART_COLORS[p]}"/>`; }); });
+  [0,Math.floor((n-1)/2),n-1].filter((v,i,a)=>a.indexOf(v)===i).forEach(i=>{ if(labels[i]) s+=`<text x="${pl+i*bw+bw/2}" y="${H-6}" text-anchor="middle">${labels[i]}</text>`; });
+  return s+'</svg>';
+}
+function svgLines(series, labels){
+  const W=360,H=170,pl=36,pr=8,pt=14,pb=22, n=labels.length, all=series.flatMap(x=>x.vals).filter(v=>v>0);
+  const max=Math.max(...all,1), min=Math.min(...all,max), lo=Math.max(0,min-(max-min)*0.2), hi=max+(max-min)*0.1||max*1.1;
+  const x=i=>pl+(n<2?0:(i/(n-1))*(W-pl-pr)), y=v=>pt+(1-(v-lo)/(hi-lo||1))*(H-pt-pb);
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}"><text x="${pl-4}" y="${pt+4}" text-anchor="end">${Math.round(hi)}</text><text x="${pl-4}" y="${H-pb}" text-anchor="end">${Math.round(lo)}</text><line x1="${pl}" y1="${H-pb}" x2="${W-pr}" y2="${H-pb}" stroke="#D3D6CC"/>`;
+  series.forEach(se=>{ const pts=se.vals.map((v,i)=>v>0?[x(i),y(v)]:null).filter(Boolean); if(pts.length) s+=`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${se.color}" stroke-width="2.5" stroke-linejoin="round"/>`+pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${se.color}"/>`).join(''); });
+  [0,Math.floor((n-1)/2),n-1].filter((v,i,a)=>a.indexOf(v)===i).forEach(i=>{ if(labels[i]) s+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle">${labels[i]}</text>`; });
+  return s+'</svg>';
+}
+function renderAnalysis(){
+  document.querySelectorAll('#s-analysis .tab').forEach(b=>b.classList.toggle('on', b.dataset.t===state.aTab));
+  const el=document.getElementById('a-body');
+  if(state.aTab==='cal') el.innerHTML=viewCal();
+  else if(state.aTab==='trend') el.innerHTML=periodChips()+viewTrend();
+  else if(state.aTab==='ex') el.innerHTML=periodChips()+viewEx();
+  else if(state.aTab==='body') el.innerHTML=periodChips()+viewBody();
+  else el.innerHTML=periodChips()+viewAI();
+}
+function calOpen(ds){ state.date=ds; go('home'); }
+function calMove(n){ const [y,m]=state.calYM.split('-').map(Number); const d=new Date(y,m-1+n,1); state.calYM=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); renderAnalysis(); }
+function viewCal(){
+  const [y,m]=state.calYM.split('-').map(Number); const first=new Date(y,m-1,1); const days=new Date(y,m,0).getDate();
+  const recs=db.records.filter(r=>r.date.startsWith(state.calYM)); const hit=new Set(recs.map(r=>r.date));
+  const vol=recs.reduce((a,r)=>a+(+r.weight||0)*(+r.reps||0),0);
+  let cells=''; for(let i=0;i<first.getDay();i++) cells+='<div class="d out"></div>';
+  for(let d=1;d<=days;d++){ const ds=state.calYM+'-'+String(d).padStart(2,'0'); cells+=`<button class="d ${hit.has(ds)?'hit':''} ${ds===todayStr()?'today':''}" onclick="calOpen('${ds}')">${d}</button>`; }
+  return `<div class="calnav"><button onclick="calMove(-1)">‹</button><b>${y}年${m}月</b><button onclick="calMove(1)">›</button></div>
+  <div class="kpis"><div class="kpi"><b class="num">${hit.size}</b><span>トレーニング日</span></div><div class="kpi"><b class="num">${recs.length}</b><span>セット</span></div><div class="kpi"><b class="num">${fmtKg(vol)}</b><span>ボリュームkg</span></div></div>
+  <div class="cal">${['日','月','火','水','木','金','土'].map(d=>'<div class="dow">'+d+'</div>').join('')}${cells}</div>`;
+}
+function weekRows(recs){
+  const from = state.weeks ? periodFrom() : weekStart(recs.length? recs.map(r=>r.date).sort()[0] : todayStr());
+  const rows=[]; for(let w=from; w<=todayStr(); w=addDays(w,7)) rows.push({start:w, recs:recs.filter(r=>r.date>=w && r.date<addDays(w,7))});
+  return rows;
+}
+function viewTrend(){
+  const recs=periodRecs(); if(!recs.length) return '<div class="empty"><b>この期間の記録がありません</b></div>';
+  const rows=weekRows(recs); const labels=rows.map(r=>md(r.start));
+  const wv=rows.map(r=>r.recs.reduce((a,x)=>a+(+x.weight||0)*(+x.reps||0),0));
+  let cum=0; const cv=rows.map((r,i)=>cum+=wv[i]);
+  const ps=rows.map(r=>{ const o={}; r.recs.forEach(x=>{ const p=partOf(x.name); o[p]=(o[p]||0)+1; }); return o; });
+  const days=new Set(recs.map(r=>r.date)).size;
+  return `<div class="kpis"><div class="kpi"><b class="num">${days}</b><span>トレーニング日</span></div><div class="kpi"><b class="num">${(days/rows.length).toFixed(1)}</b><span>週あたり日数</span></div><div class="kpi"><b class="num">${fmtKg(cum)}</b><span>ボリュームkg</span></div></div>
+  <div class="card"><h2 style="margin:0 0 6px">週別ボリューム</h2>${svgBars(wv,labels,'#2456A4')}</div>
+  <div class="card"><h2 style="margin:0 0 6px">累積ボリューム</h2>${svgLines([{vals:cv,color:'#2E7D4F'}],labels)}</div>
+  <div class="card"><h2 style="margin:0 0 6px">週別セット数（部位別）</h2>${svgStacked(ps,labels)}<div class="legend">${PARTS.map(p=>`<span><i style="background:${PART_COLORS[p]}"></i>${p}</span>`).join('')}</div></div>`;
+}
+function viewEx(){
+  const names=sortJa(db.master.map(m=>m.name));
+  if(!state.aName){ const last=db.records.slice().sort((a,b)=>b.date.localeCompare(a.date))[0]; state.aName = last? last.name : names[0]; }
+  const sel=`<select class="wide" onchange="state.aName=this.value;renderAnalysis()">${names.map(n=>`<option ${n===state.aName?'selected':''}>${esc(n)}</option>`).join('')}</select>`;
+  const ss=sessionsOf(state.aName, periodRecs()); const all=sessionsOf(state.aName);
+  if(!ss.length) return sel+'<div class="empty"><b>この期間の記録がありません</b></div>';
+  const b=best(state.aName); const bestE=Math.max(...all.map(s=>s.e1));
+  let prMax=0; const pr=new Set(); all.forEach(s=>{ if(s.top.weight>prMax){ prMax=s.top.weight; pr.add(s.date); } });
+  const labels=ss.map(s=>md(s.date));
+  const chart = b ? svgLines([{vals:ss.map(s=>s.top.weight),color:'#2456A4'},{vals:ss.map(s=>s.e1),color:'#E0B429'}],labels)+'<div class="legend"><span><i style="background:#2456A4"></i>トップセット重量</span><span><i style="background:#E0B429"></i>推定1RM</span></div>'
+                 : svgLines([{vals:ss.map(s=>s.top.reps),color:'#2456A4'}],labels)+'<div class="legend"><span><i style="background:#2456A4"></i>最大回数（自重）</span></div>';
+  const tbl=ss.slice().reverse().slice(0,20).map(s=>`<tr><td class="num">${md(s.date)}${pr.has(s.date)&&s.top.weight>0?'<span class="pr">PR</span>':''}</td><td class="num">${s.sets.map(setStr).join(' / ')}</td><td class="r num">${fmtKg(s.volume)}</td></tr>`).join('');
+  return sel+`<div class="kpis" style="margin-top:10px"><div class="kpi"><b class="num">${b?b.weight+'<small style="font-size:12px">kg</small>':'—'}</b><span>自己ベスト${b?'×'+b.reps:''}</span></div><div class="kpi"><b class="num">${bestE>0?bestE:'—'}</b><span>推定1RM最高</span></div><div class="kpi"><b class="num">${ss.length}</b><span>セッション</span></div></div>
+  <div class="card"><h2 style="margin:0 0 6px">セッションごとの推移</h2>${chart}</div>
+  <div class="card" style="margin-top:10px"><table class="tbl"><tr><th>日付</th><th>セット</th><th class="r">kg</th></tr>${tbl}</table></div>`;
+}
+function buildSummary(){
+  const recs=periodRecs(); if(!recs.length) return '（この期間の記録がありません）';
+  const rows=weekRows(recs); const days=[...new Set(recs.map(r=>r.date))].sort();
+  const vol=recs.reduce((a,r)=>a+(+r.weight||0)*(+r.reps||0),0);
+  const parts={}; recs.forEach(r=>{ const p=partOf(r.name); parts[p]=(parts[p]||0)+1; });
+  const names=[...new Set(recs.map(r=>r.name))];
+  const exRows=names.map(n=>{ const ss=sessionsOf(n,recs); const b=best(n); const f=ss[0].top, l=ss[ss.length-1].top;
+    return [n, partOf(n), ss.length, setStr(f), setStr(l), b?b.weight+'kg×'+b.reps:'自重', Math.max(...sessionsOf(n).map(s=>s.e1))||'-']; })
+    .sort((a,b)=>b[2]-a[2]);
+  let md=`# 筋トレ記録サマリー\n\n- 期間: ${ymd(days[0])} 〜 ${ymd(days[days.length-1])}（${rows.length}週）\n- トレーニング日数: ${days.length}日（週平均 ${(days.length/rows.length).toFixed(1)}日）\n- 総セット数: ${recs.length} / 総ボリューム: ${fmtKg(vol)}kg\n- 記録ルール: 1セット1行、ダンベルは片手重量、自重種目は重量なし、ボリューム=重量×回数、推定1RM=重量×(1+回数/30)\n\n## 部位別セット数\n\n| 部位 | セット | 週平均 |\n|---|---:|---:|\n`;
+  PARTS.forEach(p=>{ if(parts[p]) md+=`| ${p} | ${parts[p]} | ${(parts[p]/rows.length).toFixed(1)} |\n`; });
+  md+=`\n## 週別\n\n| 週開始 | 日数 | セット | ボリュームkg |\n|---|---:|---:|---:|\n`;
+  rows.forEach(r=>{ md+=`| ${ymd(r.start)} | ${new Set(r.recs.map(x=>x.date)).size} | ${r.recs.length} | ${fmtKg(r.recs.reduce((a,x)=>a+(+x.weight||0)*(+x.reps||0),0))} |\n`; });
+  md+=`\n## 種目別（セッション数順）\n\n| 種目 | 部位 | 回 | 期間初のトップセット | 期間末のトップセット | 自己ベスト | 推定1RM最高 |\n|---|---|---:|---|---|---|---:|\n`;
+  exRows.forEach(r=>{ md+='| '+r.join(' | ')+' |\n'; });
+  const bs=db.body.filter(b=>b.date>=periodFrom()&&b.date<=todayStr()); if(bs.length){ const a=bs[0],z=bs[bs.length-1]; md+=`\n## 体重\n\n- 期間初: ${a.weight}kg（${ymd(a.date)}） → 期間末: ${z.weight}kg（${ymd(z.date)}）\n- 期間内の最小/最大: ${Math.min(...bs.map(b=>b.weight))} / ${Math.max(...bs.map(b=>b.weight))} kg${z.fat?`\n- 体脂肪率（期間末）: ${z.fat}%`:''}${bmi(z.weight)?`\n- BMI（期間末）: ${bmi(z.weight)}`:''}\n`; }
+  return md;
+}
+function viewAI(){
+  return `<div class="card"><p class="small muted" style="margin:0 0 8px">選択中の期間の集計をMarkdownでコピーし、AIに貼って相談する。例：「次の4週間のメニューをどう組むか」「伸びが止まっている種目の原因は」。日別の明細は含まれない。</p><button class="btn primary" onclick="copySummary()">サマリーをコピー</button><textarea class="raw" id="ai-raw" readonly style="margin-top:10px;height:220px">${esc(buildSummary())}</textarea></div>`;
+}
+async function copySummary(){ const t=buildSummary(); try{ await navigator.clipboard.writeText(t); toast('コピーした'); }catch(e){ const ta=document.getElementById('ai-raw'); ta.focus(); ta.select(); toast('枠内を長押しでコピーしてください'); } }
 
 // ---- 起動 ----
 updateBadge(); go('home');
