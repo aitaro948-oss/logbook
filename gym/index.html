@@ -272,7 +272,7 @@ details.ex[open] summary::before{content:"▾ "}
   <div class="card" id="m-list"></div>
   <h2>体重</h2>
   <div class="card">
-    <div class="field"><label>身長（cm）BMIの計算に使う</label><input id="height" type="number" inputmode="decimal" step="0.1" placeholder="例：172.5" onchange="saveHeight(this.value)"></div>
+    <div class="field"><label>身長（cm）BMIの計算に使用します</label><input id="height" type="number" inputmode="decimal" step="0.1" placeholder="例：172.5" onchange="saveHeight(this.value)"></div>
   </div>
   <h2>データ</h2>
   <div class="card"><div class="small muted num" id="stat"></div></div>
@@ -439,7 +439,7 @@ function renderExport(){
 function updateBadge(){ document.getElementById('nbadge').classList.toggle('hidden', !backupOverdue()); }
 function backupAge(){ if(!db.meta||!db.meta.lastBackupAt) return null; return Math.floor((new Date(todayStr())-new Date(db.meta.lastBackupAt))/86400000); }
 function backupOverdue(){ const a=backupAge(); return a===null || a>=30; }
-function markBackup(){ db.meta.lastBackupAt = todayStr(); save(); updateBadge(); if(state.screen==='export') renderExport(); if(state.screen==='home') renderBanner(); toast('バックアップした'); }
+function markBackup(){ db.meta.lastBackupAt = todayStr(); save(); updateBadge(); if(state.screen==='export') renderExport(); if(state.screen==='home') renderBanner(); toast('バックアップしました'); }
 function renderBanner(){
   const el=document.getElementById('home-banner'); const a=backupAge();
   el.innerHTML = backupOverdue() ? '<div class="banner"><b>'+(a===null?'バックアップがまだありません':'バックアップから'+a+'日経っています')+'</b><button class="btn primary" onclick="backupJSON()">OneDriveにバックアップを保存</button></div>' : '';
@@ -453,7 +453,7 @@ async function backupJSON(){
   } else { downloadFile(file); markBackup(); }
 }
 function downloadFile(file){ const a=document.createElement('a'); a.href=URL.createObjectURL(file); a.download=file.name; a.click(); }
-function restoreJSON(inp){ const f=inp.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!d.records||!d.master) throw 0; if(!confirm('現在のデータを、読み込んだデータ（'+d.records.length+'セット）で置き換えます。よろしいですか？')) return; d.meta=d.meta||{}; d.body=d.body||[]; db=d; save(); toast('読み込んだ'); go('home'); }catch(e){ toast('読み込めないファイルです'); } }; rd.readAsText(f); inp.value=''; }
+function restoreJSON(inp){ const f=inp.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!d.records||!d.master) throw 0; if(!confirm('現在のデータを、読み込んだデータ（'+d.records.length+'セット）で置き換えます。よろしいですか？')) return; d.meta=d.meta||{}; d.body=d.body||[]; db=d; save(); toast('読み込み成功'); go('home'); }catch(e){ toast('読み込めないファイルです'); } }; rd.readAsText(f); inp.value=''; }
 async function shareCSV(){
   const rows = [['日付','種目名','重量kg','回数','メモ'], ...db.records.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(r=>[ymd(r.date),r.name,(r.weight==null?'':r.weight),r.reps,(r.memo||'')])];
   const csv = '\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
@@ -531,9 +531,9 @@ function saveBody(){
   const w=+document.getElementById('bw-w').value, f=+document.getElementById('bw-f').value;
   if(!w){ toast('体重を入れてください'); return; }
   const b=bodyFor(state.date); if(b){ b.weight=w; b.fat=f||null; } else db.body.push({date:state.date, weight:w, fat:f||null});
-  db.body.sort((a,b)=>a.date.localeCompare(b.date)); save(); state.bodyEdit=false; renderBodyCard(); toast('体重を記録した');
+  db.body.sort((a,b)=>a.date.localeCompare(b.date)); save(); state.bodyEdit=false; renderBodyCard(); toast('体重を記録しました');
 }
-function delBody(){ if(!confirm(ymd(state.date)+' の体重記録を削除しますか？')) return; db.body=db.body.filter(b=>b.date!==state.date); save(); state.bodyEdit=false; renderBodyCard(); }
+function delBody(){ if(!confirm(ymd(state.date)+' の体重記録を削除しますか？')) return; db.body=db.body.filter(b=>b.date!==state.date); save(); statale.bodyEdit=fse; renderBodyCard(); }
 async function shareBodyCSV(){
   const rows=[['日付','体重kg','体脂肪率%','BMI'], ...db.body.map(b=>[ymd(b.date),b.weight,b.fat||'',bmi(b.weight)||''])];
   const csv='\uFEFF'+rows.map(r=>r.join(',')).join('\r\n'); const file=new File([csv],'体重記録_'+todayStr()+'.csv',{type:'text/csv'});
